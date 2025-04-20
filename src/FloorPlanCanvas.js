@@ -1,11 +1,28 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Stage, Layer, Image as KonvaImage, Line, Rect, Transformer, Circle } from 'react-konva'; // Added Circle
+import { Stage, Layer, Image as KonvaImage, Line, Rect, Transformer, Circle, Group, Text } from 'react-konva'; // Added Group, Text
 import Konva from 'konva'; // Import Konva namespace
 
 // Helper function to calculate distance
 const getDistance = (p1, p2) => {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 };
+
+// Helper function to format inches into feet/inches string
+function formatInches(inches) {
+    if (inches === null || inches === undefined) return '';
+    const feet = Math.floor(inches / 12);
+    const remainingInches = Math.round((inches % 12) * 10) / 10; // Round to one decimal place
+    let output = '';
+    if (feet > 0) {
+        output += `${feet}'`;
+    }
+    if (remainingInches > 0) {
+        if (output.length > 0) output += ' '; // Add space if feet were present
+        output += `${remainingInches}"`;
+    }
+    return output || '0"'; // Handle case where inches is 0
+}
+
 
 function FloorPlanCanvas({
   image, // The uploaded image object
@@ -30,16 +47,13 @@ function FloorPlanCanvas({
   // --- Stage Size Calculation ---
   const updateStageSize = useCallback(() => {
     if (containerRef.current) {
-      // Ensure container has non-zero dimensions before setting state
-      const containerWidth = containerRef.current.offsetWidth || 300; // Fallback width
-      const containerHeight = containerRef.current.offsetHeight || 300; // Fallback height
+      const containerWidth = containerRef.current.offsetWidth || 300;
+      const containerHeight = containerRef.current.offsetHeight || 300;
       setStageSize({ width: containerWidth, height: containerHeight });
     }
-  }, []); // No dependencies, relies on ref
+  }, []);
 
-  // Update stage size on mount and window resize
   useEffect(() => {
-    // Run initial size calculation slightly delayed to ensure layout is stable
     const timerId = setTimeout(updateStageSize, 0);
     window.addEventListener('resize', updateStageSize);
     return () => {
@@ -58,66 +72,57 @@ function FloorPlanCanvas({
       img.onload = () => {
         setImageElement(img);
         setImageSize({ width: img.width, height: img.height });
-        // Don't revoke object URL here, Konva needs it
       };
       img.onerror = () => {
         console.error("Error loading image");
         setImageElement(null);
         setImageSize({ width: 0, height: 0 });
-        if (objectUrl) URL.revokeObjectURL(objectUrl); // Revoke on error
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
       };
     } else {
       setImageElement(null);
       setImageSize({ width: 0, height: 0 });
     }
-
-    // Cleanup function to revoke URL when image changes or component unmounts
     return () => {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [image]);
 
-  // Calculate image scale factor whenever stage or image size changes
   useEffect(() => {
       if (imageElement && stageSize.width > 0 && stageSize.height > 0 && imageSize.width > 0) {
-          // Calculate scale needed to fit width and height
           const scaleX = stageSize.width / imageSize.width;
           const scaleY = stageSize.height / imageSize.height;
-          // Use the smaller scale factor to ensure the whole image fits ("contain")
           const newScaleFactor = Math.min(scaleX, scaleY);
           setImageScaleFactor(newScaleFactor);
       } else {
-          setImageScaleFactor(1); // Default scale if no image or stage size yet
+          setImageScaleFactor(1);
       }
   }, [imageElement, stageSize, imageSize]);
 
-  // Calculate image dimensions on stage
   const displayedImageWidth = imageSize.width * imageScaleFactor;
   const displayedImageHeight = imageSize.height * imageScaleFactor;
-  // Center the image on the stage
   const imageOffsetX = (stageSize.width - displayedImageWidth) / 2;
   const imageOffsetY = (stageSize.height - displayedImageHeight) / 2;
 
-
-   // Attach transformer to selected shape
+   // --- Transformer Logic ---
   useEffect(() => {
-    if (transformerRef.current && layerRef.current && selectedFurnitureId) {
-      const stage = stageRef.current;
-      // Find node by ID - more reliable than class name if IDs are unique
-      const selectedNode = stage?.findOne('#' + selectedFurnitureId); // Use optional chaining
+    if (transformerRef.current) {
+        const transformer = transformerRef.current;
+        const stage = transformer.getStage();
+        const selectedNode = stage?.findOne('#' + selectedFurnitureId); // Find the Group by ID
 
-      if (selectedNode) {
-        transformerRef.current.nodes([selectedNode]);
-      } else {
-        transformerRef.current.nodes([]);
-      }
-      transformerRef.current.getLayer()?.batchDraw(); // Use optional chaining
-    } else if (transformerRef.current) {
-        // Explicitly clear nodes if nothing is selected
-        transformerRef.current.nodes([]);
-        transformerRef.current.getLayer()?.batchDraw(); // Use optional chaining for safety
+        if (selectedNode && selectedNode instanceof Konva.Group) {
+            // Find the Rect within the group to attach the transformer
+            const rectNode = selectedNode.findOne('Rect');
+            if (rectNode) {
+                transformer.nodes([rectNode]); // Attach to the Rect
+            } else {
+                 transformer.nodes([]); // No rect found in group
+            }
+        } else {
+            transformer.nodes([]); // No group selected or found
+        }
+        transformer.getLayer()?.batchDraw();
     }
   }, [selectedFurnitureId]); // Rerun when selection changes
 
@@ -127,31 +132,22 @@ function FloorPlanCanvas({
     const stage = e.target.getStage();
     if (!stage) return;
 
-    // Check if the click target is the stage background or the image itself
-    const isBackgroundClick = e.target === stage;
-    // Sometimes clicks register on the layer instead of stage/image
-    const isLayerClick = e.target === layerRef.current;
-    const isImageClick = e.target.hasName('floorplan-image');
+    const target = e.target;
 
-    if (isBackgroundClick || isImageClick || isLayerClick) {
+    // If click is on background or image
+    if (target === stage || target.hasName('floorplan-image') || target === layerRef.current) {
        if (isSettingScale) {
-            // Need to transform pointer position from stage coordinates to image coordinates
             const pos = stage.getPointerPosition();
-            if (!pos) return; // Exit if pointer position is somehow null
-
-            // Adjust for image offset and scale to get coordinates relative to the original image
+            if (!pos) return;
             const imageX = (pos.x - imageOffsetX) / imageScaleFactor;
             const imageY = (pos.y - imageOffsetY) / imageScaleFactor;
-
-            // Only register click if it's within the image bounds (allow slight tolerance)
-            const tolerance = 1 / imageScaleFactor; // 1 pixel tolerance on screen
+            const tolerance = 1 / imageScaleFactor;
             if (imageX >= -tolerance && imageX <= imageSize.width + tolerance &&
                 imageY >= -tolerance && imageY <= imageSize.height + tolerance)
             {
-                 // Clamp coordinates to be strictly within 0 to image dimensions
                  const clampedX = Math.max(0, Math.min(imageX, imageSize.width));
                  const clampedY = Math.max(0, Math.min(imageY, imageSize.height));
-                 onSetScalePoints({ x: clampedX, y: clampedY }); // Pass clamped click position relative to image
+                 onSetScalePoints({ x: clampedX, y: clampedY });
             }
        } else {
            onSelectFurniture(null); // Deselect furniture
@@ -159,104 +155,87 @@ function FloorPlanCanvas({
        return;
     }
 
-    // Check if clicking a furniture item (Rect)
-    // Walk up the node tree to find the Rect if a transformer handle was clicked
-    let targetNode = e.target;
-    while (targetNode && !(targetNode instanceof Konva.Rect) && targetNode !== stage) {
-        if (targetNode.getParent() instanceof Konva.Transformer) {
-            // If clicking the transformer itself or its handles, don't deselect
-            return;
-        }
-        targetNode = targetNode.getParent();
+    // If click is on a furniture group or its children (Rect, Text)
+    let group = target;
+    while (group && !(group instanceof Konva.Group) && group !== stage) {
+        group = group.getParent();
     }
 
-    if (targetNode instanceof Konva.Rect && targetNode.id() && !isSettingScale) {
-        const id = targetNode.id();
-        onSelectFurniture(id);
-        // Bring transformer to top (optional, but good UX)
-        transformerRef.current?.moveToTop();
-        targetNode.getLayer()?.batchDraw();
-    } else if (!(e.target.getParent() instanceof Konva.Transformer)) {
-        // Deselect if clicking something else that isn't part of the transformer
+    if (group instanceof Konva.Group && group.id() && !isSettingScale) {
+        onSelectFurniture(group.id()); // Select the group
+    } else if (!(target.getParent() instanceof Konva.Transformer)) {
+        // Deselect if clicking something unrelated to furniture or transformer
         onSelectFurniture(null);
     }
   };
 
+  // Transform End handler - now needs to get ID from the transformed node's parent group
   const handleTransformEnd = (e) => {
-      const node = e.target; // The shape being transformed (Rect)
-      if (!node || !pixelsPerInch) return; // Need scale to convert back
+      const node = e.target; // This is the Rect node
+      if (!node || !pixelsPerInch) return;
+
+      const group = node.getParent(); // Get the parent Group
+      if (!group || !(group instanceof Konva.Group)) return; // Should always be a group
 
       const scaleX = node.scaleX();
       const scaleY = node.scaleY();
 
-      // Reset scale to avoid distortion issues with transformer
       node.scaleX(1);
       node.scaleY(1);
 
-      // Calculate new dimensions based on scale factor (in stage pixel space)
-      // node.width/height() are already visually scaled, multiply by the applied scale factor
       const newStageWidthPx = node.width() * scaleX;
       const newStageHeightPx = node.height() * scaleY;
-
-      // Convert stage pixel dimensions back to original image pixel dimensions
       const newImagePxWidth = newStageWidthPx / imageScaleFactor;
       const newImagePxHeight = newStageHeightPx / imageScaleFactor;
-
-      // Convert image pixel dimensions back to inches
       const newWidthInches = newImagePxWidth / pixelsPerInch;
       const newHeightInches = newImagePxHeight / pixelsPerInch;
 
-      // Get position relative to the image's top-left corner
-      // Need the node's center position AFTER transform, relative to stage origin
-      const centerPos = {
-          x: node.x(),
-          y: node.y(),
-      };
-      // Convert stage center position to image relative position
+      // Position comes from the GROUP now
+      const centerPos = { x: group.x(), y: group.y() };
       const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
       const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
 
-
-      onFurnitureMove(node.id(), {
-          x: imageRelativeX, // Center position relative to image
-          y: imageRelativeY, // Center position relative to image
-          rotation: node.rotation(),
-          width: newWidthInches, // Pass dimensions in inches
+      onFurnitureMove(group.id(), { // Use group's ID
+          x: imageRelativeX,
+          y: imageRelativeY,
+          rotation: group.rotation(), // Use group's rotation
+          width: newWidthInches,
           height: newHeightInches,
       });
   };
 
+  // Drag End handler - now operates on the Group
   const handleDragEnd = (e) => {
-      const node = e.target;
-      if (!node) return;
+      const group = e.target; // The Group node
+      if (!group || !(group instanceof Konva.Group)) return;
 
-      // Get position relative to the image's top-left corner
-      // Node x/y is already the center due to offsetX/Y
-      const centerPos = { x: node.x(), y: node.y() };
+      const centerPos = { x: group.x(), y: group.y() };
       const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
       const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
 
-      onFurnitureMove(node.id(), {
-          x: imageRelativeX, // Center position relative to image
-          y: imageRelativeY, // Center position relative to image
-          rotation: node.rotation(), // Rotation doesn't change on drag
-          width: node.attrs.originalWidthInches, // Pass original inches width
-          height: node.attrs.originalHeightInches, // Pass original inches height
+      // Find the Rect inside to get original dimensions (could also store on group)
+      const rectNode = group.findOne('Rect');
+      const originalWidthInches = rectNode?.attrs?.originalWidthInches;
+      const originalHeightInches = rectNode?.attrs?.originalHeightInches;
+
+      onFurnitureMove(group.id(), {
+          x: imageRelativeX,
+          y: imageRelativeY,
+          rotation: group.rotation(),
+          width: originalWidthInches, // Pass original inches width
+          height: originalHeightInches, // Pass original inches height
       });
   };
 
-  // Convert furniture dimensions (inches) to pixels *relative to the original image size*
   const furnitureToImagePixels = (item) => {
-    if (!pixelsPerInch) return null; // Cannot draw if scale is not set
+    if (!pixelsPerInch) return null;
     return {
       ...item,
-      // Calculate pixel dimensions based on the image scale
       imagePxWidth: item.width * pixelsPerInch,
       imagePxHeight: item.height * pixelsPerInch,
     };
   };
 
-  // Helper to convert image point to stage point
   const imageToStagePoint = (point) => {
       if (!point) return { x: 0, y: 0 };
       return {
@@ -267,17 +246,16 @@ function FloorPlanCanvas({
 
   // --- Rendering ---
   return (
-    // Add a ref to the container div
     <div ref={containerRef} className="canvas-container">
       <Stage
         ref={stageRef}
         width={stageSize.width}
         height={stageSize.height}
         onClick={handleStageClick}
-        onTap={handleStageClick} // For touch devices
+        onTap={handleStageClick}
       >
         <Layer ref={layerRef}>
-          {/* Background Image - Scaled and Centered */}
+          {/* Background Image */}
           {imageElement && displayedImageWidth > 0 && (
             <KonvaImage
               image={imageElement}
@@ -285,108 +263,105 @@ function FloorPlanCanvas({
               y={imageOffsetY}
               width={displayedImageWidth}
               height={displayedImageHeight}
-              name="floorplan-image" // Name for click detection
-              listening={isSettingScale || selectedFurnitureId === null} // Only listen if setting scale or no furniture selected
+              name="floorplan-image"
+              listening={isSettingScale || selectedFurnitureId === null}
             />
           )}
 
-          {/* Scale Drawing Visuals - Show points while drawing OR when line is waiting for input */}
+          {/* Scale Drawing Visuals */}
           {((isSettingScale && scale.points.length > 0) || (scale.points.length === 2 && pixelsPerInch === null)) &&
             scale.points.map((point, index) => {
-              // Convert image point to stage point for rendering the circle marker
               const stagePoint = imageToStagePoint(point);
               return (
-                  <Circle
-                      key={`scale-point-${index}`}
-                      x={stagePoint.x}
-                      y={stagePoint.y}
-                      radius={6} // Make points visible
-                      fill="red"
-                      stroke="black"
-                      strokeWidth={1}
-                      listening={false} // Don't interfere with clicks
-                  />
+                  <Circle key={`scale-point-${index}`} x={stagePoint.x} y={stagePoint.y} radius={6} fill="red" stroke="black" strokeWidth={1} listening={false} />
               );
           })}
-          {/* Scale Line - Show only when 2 points exist AND scale is not yet set */}
           {scale.points.length === 2 && pixelsPerInch === null && (
             <Line
-              // Convert points (relative to original image) to stage coordinates
-              points={scale.points.flatMap(p => {
-                  const sp = imageToStagePoint(p);
-                  return [sp.x, sp.y];
-              })}
-              stroke="cyan" // Brighter color
-              strokeWidth={5} // Thicker line
-              lineCap="round"
-              lineJoin="round"
-              listening={false} // Don't let the line interfere with clicks
+              points={scale.points.flatMap(p => { const sp = imageToStagePoint(p); return [sp.x, sp.y]; })}
+              stroke="cyan" strokeWidth={5} lineCap="round" lineJoin="round" listening={false}
             />
           )}
 
-          {/* Furniture Items - Positioned relative to the scaled image */}
+          {/* Furniture Items - Rendered as Groups */}
           {furniture.map((item) => {
             const itemPx = furnitureToImagePixels(item);
-            if (!itemPx) return null; // Skip if scale not set
+            if (!itemPx) return null;
 
-            // Calculate position and size on the stage
-            // item.x/y is the center point relative to the original image
             const stageCenter = imageToStagePoint({ x: item.x, y: item.y });
             const stageWidth = itemPx.imagePxWidth * imageScaleFactor;
             const stageHeight = itemPx.imagePxHeight * imageScaleFactor;
+            const fontSize = Math.max(10, Math.min(14, stageWidth * 0.15)) / imageScaleFactor; // Adjust font size based on item size, scale back
+            const textYOffset = -fontSize * 1.2; // Position text slightly above the rect center
 
             return (
-              <Rect
+              <Group
                 key={item.id}
-                id={item.id} // Use furniture id for Konva node id
-                x={stageCenter.x} // Use calculated stage center X
-                y={stageCenter.y} // Use calculated stage center Y
-                width={stageWidth}
-                height={stageHeight}
+                id={item.id} // ID on the Group for selection
+                x={stageCenter.x}
+                y={stageCenter.y}
                 rotation={item.rotation}
-                offsetX={stageWidth / 2} // Set origin to center for rotation/scaling
-                offsetY={stageHeight / 2}
-                fill="rgba(100, 150, 255, 0.7)" // Semi-transparent blue
-                stroke="black"
-                strokeWidth={1.5 / imageScaleFactor} // Keep stroke visually consistent when scaled
-                draggable={!isSettingScale && pixelsPerInch !== null} // Only draggable when not setting scale and scale is set
+                draggable={!isSettingScale && pixelsPerInch !== null}
                 onDragEnd={handleDragEnd}
-                onTransformEnd={handleTransformEnd}
-                // Store original dimensions in inches for reference on transform/drag end
-                originalWidthInches={item.width}
-                originalHeightInches={item.height}
+                // Set offset for the group to rotate around its center
+                offsetX={0} // Offset is handled by children relative to group 0,0
+                offsetY={0}
+                // Click/Tap on Group selects it
                 onClick={(e) => {
-                    // Prevent stage click from deselecting when clicking shape
+                    e.cancelBubble = true; // Prevent stage click
+                    if (!isSettingScale && pixelsPerInch !== null) {
+                        onSelectFurniture(item.id);
+                    }
+                }}
+                onTap={(e) => {
                     e.cancelBubble = true;
                     if (!isSettingScale && pixelsPerInch !== null) {
                         onSelectFurniture(item.id);
                     }
                 }}
-                 onTap={(e) => { // For touch devices
-                    e.cancelBubble = true;
-                     if (!isSettingScale && pixelsPerInch !== null) {
-                        onSelectFurniture(item.id);
-                    }
-                }}
-              />
+              >
+                <Rect
+                  // No ID needed here if group handles selection
+                  x={-stageWidth / 2} // Position relative to group center
+                  y={-stageHeight / 2} // Position relative to group center
+                  width={stageWidth}
+                  height={stageHeight}
+                  fill="rgba(100, 150, 255, 0.7)"
+                  stroke="black"
+                  strokeWidth={1.5 / imageScaleFactor}
+                  // Store original dimensions for reference if needed by transformer/drag
+                  originalWidthInches={item.width}
+                  originalHeightInches={item.height}
+                  // Transformer will attach here, so it needs listening enabled
+                  listening={true}
+                />
+                <Text
+                  text={`${item.name}\n(${formatInches(item.width)} x ${formatInches(item.height)})`}
+                  fontSize={fontSize}
+                  fill="black"
+                  align="center"
+                  verticalAlign="middle"
+                  x={-stageWidth / 2} // Position relative to group center
+                  y={-stageHeight / 2 - fontSize * 2.2} // Position above the rect
+                  width={stageWidth} // Constrain text width
+                  padding={2 / imageScaleFactor}
+                  listening={false} // Text doesn't need to be interactive
+                  perfectDrawEnabled={false} // Perf optimization for text
+                />
+              </Group>
             );
           })}
 
-           {/* Transformer for selected furniture */}
+           {/* Transformer - Attaches to the Rect inside the selected Group */}
            <Transformer
              ref={transformerRef}
              boundBoxFunc={(oldBox, newBox) => {
-               // Limit resize dimensions if needed (consider minimum size in pixels on stage)
                const minSize = 10;
-               if (newBox.width < minSize || newBox.height < minSize) {
-                 return oldBox;
-               }
+               if (newBox.width < minSize || newBox.height < minSize) return oldBox;
                return newBox;
              }}
-             // Enable rotation, disable skew
              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
              rotateEnabled={true}
-             // Keep transformer border visually consistent (adjust based on stage scale if zooming is added later)
              borderStrokeWidth={1.5 / (stageRef.current?.scaleX() ?? 1)}
              anchorStrokeWidth={1 / (stageRef.current?.scaleX() ?? 1)}
              rotateAnchorOffset={20 / (stageRef.current?.scaleX() ?? 1)}
@@ -395,32 +370,21 @@ function FloorPlanCanvas({
              anchorStroke="black"
              borderStroke="black"
              borderDash={[3, 3]}
+             // Attach transform end handler here
+             onTransformEnd={handleTransformEnd}
            />
         </Layer>
       </Stage>
-       {/* Status Messages - Rendered outside Stage but inside container */}
+       {/* Status Messages */}
        {isSettingScale && (
            <div className="status-message info">
                Click the first point on the floor plan image for your reference line.
                {scale.points.length === 1 && " Now click the second point."}
            </div>
        )}
-        {!image && (
-             <div className="status-message info">
-               Upload a floor plan image using the toolbar to begin.
-           </div>
-        )}
-         {image && pixelsPerInch === null && !isSettingScale && scale.points.length !== 2 && ( // Show only if scale not set AND input not showing
-             <div className="status-message info">
-               Use the 'Draw Scale Line' button in the toolbar to set the scale.
-             </div>
-         )}
-         {/* Message indicating scale input is ready in toolbar */}
-         {image && pixelsPerInch === null && !isSettingScale && scale.points.length === 2 && (
-              <div className="status-message info">
-                Enter the real-world length for the drawn line in the toolbar (e.g., 10', 5'6").
-              </div>
-         )}
+        {!image && ( <div className="status-message info"> Upload a floor plan image using the toolbar to begin. </div> )}
+         {image && pixelsPerInch === null && !isSettingScale && scale.points.length !== 2 && ( <div className="status-message info"> Use the 'Draw Scale Line' button in the toolbar to set the scale. </div> )}
+         {image && pixelsPerInch === null && !isSettingScale && scale.points.length === 2 && ( <div className="status-message info"> Enter the real-world length for the drawn line in the toolbar (e.g., 10', 5'6"). </div> )}
     </div>
   );
 }

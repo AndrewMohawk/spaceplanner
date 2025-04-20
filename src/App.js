@@ -100,16 +100,21 @@ function App() {
       alert("Please set the scale before adding furniture.");
       return;
     }
+    // Ensure unique ID even if base template ID is reused
+    const uniqueId = `${itemTemplate.id}-${Date.now()}`;
     const newItem = {
       ...itemTemplate,
-      id: `${itemTemplate.id}-${Date.now()}`, // Ensure unique ID even for defaults
+      id: uniqueId,
       // Initial position (relative to original image, center point)
       // Place it near top-left but consider item size slightly
-      x: (itemTemplate.width * pixelsPerInch / 2) + 50,
-      y: (itemTemplate.height * pixelsPerInch / 2) + 50,
+      // Use original template width/height here before converting
+      x: (itemTemplate.width / 2) + 50 / (pixelsPerInch || 1), // Offset in inches approx
+      y: (itemTemplate.height / 2) + 50 / (pixelsPerInch || 1), // Offset in inches approx
       rotation: 0,
     };
     setFurniture(prev => [...prev, newItem]);
+    // Select the newly added item
+    setSelectedFurnitureId(uniqueId);
   };
 
  // Receives updated attributes (x, y, rotation, width, height)
@@ -131,12 +136,38 @@ function App() {
           : item
       )
     );
-  }, []); // No dependencies needed if logic is self-contained
+ }, []); // No dependencies needed if logic is self-contained
 
   const handleSelectFurniture = (id) => {
       if (isSettingScale) return; // Don't allow selection while setting scale
+      console.log("Selecting furniture:", id);
       setSelectedFurnitureId(id);
   };
+
+  const handleDeleteFurniture = useCallback((idToDelete) => {
+    setFurniture(prev => prev.filter(item => item.id !== idToDelete));
+    // Deselect if the deleted item was selected
+    if (selectedFurnitureId === idToDelete) {
+      setSelectedFurnitureId(null);
+    }
+  }, [selectedFurnitureId]); // Depend on selectedFurnitureId to ensure correct deselection
+
+  const handleCloneFurniture = useCallback((idToClone) => {
+    const itemToClone = furniture.find(item => item.id === idToClone);
+    if (itemToClone && pixelsPerInch) {
+      const uniqueId = `${itemToClone.id.split('-')[0]}-${Date.now()}`; // Base ID + timestamp
+      const newItem = {
+        ...itemToClone,
+        id: uniqueId,
+        // Offset the cloned item slightly (e.g., 20 pixels down/right in stage space)
+        x: itemToClone.x + (20 / pixelsPerInch), // Offset in image space
+        y: itemToClone.y + (20 / pixelsPerInch), // Offset in image space
+      };
+      setFurniture(prev => [...prev, newItem]);
+      // Select the newly cloned item
+      setSelectedFurnitureId(uniqueId);
+    }
+  }, [furniture, pixelsPerInch]); // Depend on furniture array and scale
 
 
   return (
@@ -144,6 +175,11 @@ function App() {
       <h1>Floor Plan Furniture Arranger</h1>
       <div className="main-content">
         <Toolbar
+          placedFurniture={furniture} // Pass the list of placed items
+          selectedFurnitureId={selectedFurnitureId}
+          onSelectFurniture={handleSelectFurniture} // Allow selecting from list
+          onDeleteFurniture={handleDeleteFurniture} // Pass delete handler
+          onCloneFurniture={handleCloneFurniture} // Pass clone handler
           onImageUpload={handleImageUpload}
           onSetScaleMode={handleSetScaleMode}
           scale={scaleState} // Pass scale state object

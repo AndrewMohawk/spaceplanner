@@ -100,6 +100,7 @@ h1 {
   transition: background-color 0.2s;
   width: 100%; /* Make buttons fill width */
   box-sizing: border-box;
+  font-size: 0.9em; /* Slightly smaller font for buttons */
 }
 
 .toolbar button:hover {
@@ -110,6 +111,18 @@ h1 {
   background-color: #ccc;
   cursor: not-allowed;
 }
+
+/* Specific button styles */
+.toolbar .delete-button {
+    background-color: #dc3545;
+}
+.toolbar .delete-button:hover {
+    background-color: #c82333;
+}
+.toolbar .delete-button:disabled {
+    background-color: #ccc;
+}
+
 
 .scale-input-group {
   display: flex;
@@ -134,7 +147,7 @@ h1 {
 }
 
 
-.furniture-list {
+.furniture-list { /* For the "Add Furniture" section */
   list-style: none;
   padding: 0;
   margin: 0;
@@ -165,6 +178,74 @@ h1 {
     margin-bottom: 0;
     flex-shrink: 0; /* Prevent button from shrinking */
 }
+
+/* Styles for the Placed Items list */
+.placed-furniture-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 250px; /* Limit height and allow scrolling if needed */
+    overflow-y: auto;
+}
+
+.placed-furniture-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 5px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer; /* Indicate items are clickable */
+    transition: background-color 0.2s;
+}
+
+.placed-furniture-list li:last-child {
+    border-bottom: none;
+}
+
+.placed-furniture-list li:hover {
+    background-color: #f8f9fa;
+}
+
+.placed-furniture-list li.selected {
+    background-color: #e7f3fe; /* Highlight selected item */
+    font-weight: bold;
+}
+
+.placed-furniture-list .item-name {
+    font-size: 0.9em;
+    flex-grow: 1;
+    margin-right: 10px; /* Space between name and actions */
+    word-break: break-word;
+}
+
+.placed-furniture-list .item-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.placed-furniture-list .icon-button {
+    padding: 3px 6px;
+    font-size: 0.8em;
+    line-height: 1;
+    width: auto; /* Let button size naturally */
+    border-radius: 3px;
+}
+
+.placed-furniture-list .clone-button {
+    background-color: #28a745;
+}
+.placed-furniture-list .clone-button:hover {
+    background-color: #218838;
+}
+
+.placed-furniture-list .delete-button {
+    background-color: #dc3545;
+}
+.placed-furniture-list .delete-button:hover {
+    background-color: #c82333;
+}
+
 
 .canvas-container {
   flex-grow: 1; /* Allow canvas container to take remaining space */
