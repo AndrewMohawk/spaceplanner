@@ -97,6 +97,14 @@ function App() {
     }
   }, [pendingScaleConfirmation]);
 
+  // Define handleDeleteFurniture BEFORE the useEffect that uses it
+  // Make sure handleDeleteFurniture is stable using useCallback
+  const handleDeleteFurniture = useCallback((idToDelete) => {
+    setFurniture(prev => prev.filter(item => item.id !== idToDelete));
+    // Use functional update for setSelectedFurnitureId if it depends on previous state
+    setSelectedFurnitureId(prevSelectedId => (prevSelectedId === idToDelete ? null : prevSelectedId));
+  }, []); // No dependency on selectedFurnitureId needed here if using functional update
+
   // Effect for handling keyboard delete
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -106,6 +114,7 @@ function App() {
 
       if (!isInputFocused && selectedFurnitureId && (event.key === 'Delete' || event.key === 'Backspace')) {
         event.preventDefault(); // Prevent default browser behavior (like navigating back)
+        // Now handleDeleteFurniture is guaranteed to be initialized
         handleDeleteFurniture(selectedFurnitureId);
       }
     };
@@ -240,12 +249,7 @@ function App() {
       setSelectedFurnitureId(id);
   };
 
-  // Make sure handleDeleteFurniture is stable using useCallback
-  const handleDeleteFurniture = useCallback((idToDelete) => {
-    setFurniture(prev => prev.filter(item => item.id !== idToDelete));
-    // Use functional update for setSelectedFurnitureId if it depends on previous state
-    setSelectedFurnitureId(prevSelectedId => (prevSelectedId === idToDelete ? null : prevSelectedId));
-  }, []); // No dependency on selectedFurnitureId needed here if using functional update
+  // handleDeleteFurniture is defined above the useEffect hook now
 
   const handleCloneFurniture = useCallback((idToClone) => {
     const itemToClone = furniture.find(item => item.id === idToClone);
