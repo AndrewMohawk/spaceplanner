@@ -3,7 +3,7 @@ import Toolbar from './Toolbar';
 import FloorPlanCanvas from './FloorPlanCanvas';
 import './App.css';
 
-// Helper function to calculate distance
+// Helper function to calculate distance (between points in original image pixel space)
 const getDistance = (p1, p2) => {
   if (!p1 || !p2) return 0;
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
@@ -12,8 +12,10 @@ const getDistance = (p1, p2) => {
 function App() {
   const [floorplanImage, setFloorplanImage] = useState(null);
   const [isSettingScale, setIsSettingScale] = useState(false);
+  // scaleState stores points relative to original image, and pixel distance between them
   const [scaleState, setScaleState] = useState({ points: [], pixelLength: 0 });
-  const [scaleInput, setScaleInput] = useState(''); // User input for real-world length
+  // scaleInput now stores the raw string from the Toolbar input
+  const [scaleInput, setScaleInput] = useState('');
   const [pixelsPerInch, setPixelsPerInch] = useState(null); // Calculated scale
   const [furniture, setFurniture] = useState([]); // { id, name, width, height, x, y, rotation }
   const [selectedFurnitureId, setSelectedFurnitureId] = useState(null);
@@ -22,7 +24,7 @@ function App() {
     const file = event.target.files[0];
     if (file) {
       setFloorplanImage(file);
-      // Reset scale and furniture when a new image is uploaded
+      // Reset everything related to the previous image/scale
       setPixelsPerInch(null);
       setScaleState({ points: [], pixelLength: 0 });
       setScaleInput('');
@@ -38,43 +40,58 @@ function App() {
         return;
     }
     setIsSettingScale(true);
-    setScaleState({ points: [], pixelLength: 0 }); // Reset points when starting
+    // Reset scale state when entering mode
+    setScaleState({ points: [], pixelLength: 0 });
     setScaleInput('');
+    setPixelsPerInch(null); // Clear previous scale if re-drawing
     setSelectedFurnitureId(null); // Deselect furniture
   };
 
+  // Receives point coordinates relative to the original image dimensions
   const handleSetScalePoints = (point) => {
     if (!isSettingScale) return;
 
     setScaleState(prev => {
       const newPoints = [...prev.points, point];
       if (newPoints.length === 1) {
+        // Still waiting for the second point
         return { ...prev, points: newPoints };
       } else if (newPoints.length === 2) {
+        // Second point clicked, calculate pixel distance
         const pixelLength = getDistance(newPoints[0], newPoints[1]);
         setIsSettingScale(false); // Turn off drawing mode automatically
+        // Keep the points, store the calculated pixel length
         return { points: newPoints, pixelLength: pixelLength };
       }
-      // If more than 2 points somehow, reset (or ignore)
+      // If more than 2 points somehow, reset (shouldn't happen with current logic)
       return { points: [], pixelLength: 0 };
     });
   };
 
+  // Update the raw string state for the controlled input in Toolbar
   const handleScaleInputChange = (event) => {
     setScaleInput(event.target.value);
   };
 
-  const handleSetScaleConfirm = () => {
-    const realLength = parseFloat(scaleInput);
-    if (realLength > 0 && scaleState.pixelLength > 0) {
-      const newScale = scaleState.pixelLength / realLength;
+  // This function now receives the PARSED value in INCHES from the Toolbar
+  const handleSetScaleConfirm = (realLengthInches) => {
+    // We already know realLengthInches is > 0 from Toolbar's validation
+    if (scaleState.pixelLength > 0) {
+      // Calculate scale: pixels (on original image) per inch
+      const newScale = scaleState.pixelLength / realLengthInches;
       setPixelsPerInch(newScale);
-      // Maybe clear the visual line after setting scale? Or keep it?
+      // Clear the input field now that scale is set
+      setScaleInput('');
+      // Keep scaleState.points and pixelLength for potential display or reference?
+      // Or clear them? Let's keep them for now.
       // setScaleState({ points: [], pixelLength: 0 });
-      setScaleInput(''); // Clear input after setting
       console.log(`Scale set: ${newScale.toFixed(2)} pixels per inch`);
     } else {
-      alert("Please enter a valid positive length for the scale line.");
+      // This case should ideally not be reached if Toolbar validates pixelLength > 0 implicitly
+      alert("Could not set scale. Please draw the scale line again.");
+      // Reset state if something went wrong
+       setScaleState({ points: [], pixelLength: 0 });
+       setScaleInput('');
     }
   };
 
@@ -86,13 +103,18 @@ function App() {
     const newItem = {
       ...itemTemplate,
       id: `${itemTemplate.id}-${Date.now()}`, // Ensure unique ID even for defaults
-      x: 50, // Default position (e.g., top-left corner)
-      y: 50,
+      // Initial position (relative to original image, center point)
+      // Place it near top-left but consider item size slightly
+      x: (itemTemplate.width * pixelsPerInch / 2) + 50,
+      y: (itemTemplate.height * pixelsPerInch / 2) + 50,
       rotation: 0,
     };
     setFurniture(prev => [...prev, newItem]);
   };
 
+ // Receives updated attributes (x, y, rotation, width, height)
+ // x, y are center point relative to original image
+ // width, height are in inches
  const handleFurnitureMove = useCallback((id, newAttrs) => {
     setFurniture(prev =>
       prev.map(item =>
@@ -103,8 +125,8 @@ function App() {
               y: newAttrs.y,
               rotation: newAttrs.rotation,
               // Update dimensions if they changed (from transformer)
-              width: newAttrs.width ?? item.width,
-              height: newAttrs.height ?? item.height,
+              width: newAttrs.width ?? item.width, // Use new width if provided
+              height: newAttrs.height ?? item.height, // Use new height if provided
             }
           : item
       )
@@ -124,10 +146,10 @@ function App() {
         <Toolbar
           onImageUpload={handleImageUpload}
           onSetScaleMode={handleSetScaleMode}
-          scale={scaleState}
-          scaleInput={scaleInput}
-          onScaleInputChange={handleScaleInputChange}
-          onSetScaleConfirm={handleSetScaleConfirm}
+          scale={scaleState} // Pass scale state object
+          scaleInput={scaleInput} // Pass raw input string
+          onScaleInputChange={handleScaleInputChange} // Pass setter for raw input string
+          onSetScaleConfirm={handleSetScaleConfirm} // Pass confirmation handler (expects inches)
           isSettingScale={isSettingScale}
           pixelsPerInch={pixelsPerInch}
           onAddFurniture={handleAddFurniture}
@@ -136,7 +158,7 @@ function App() {
           image={floorplanImage}
           isSettingScale={isSettingScale}
           onSetScalePoints={handleSetScalePoints}
-          scale={scaleState}
+          scale={scaleState} // Pass scale state object
           pixelsPerInch={pixelsPerInch}
           furniture={furniture}
           onFurnitureMove={handleFurnitureMove}

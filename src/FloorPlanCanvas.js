@@ -12,7 +12,7 @@ function FloorPlanCanvas({
   isSettingScale,
   onSetScalePoints, // Callback when scale points are clicked
   scale, // { points: [{x,y}, {x,y}], pixelLength: number }
-  pixelsPerInch, // Calculated scale factor
+  pixelsPerInch, // Calculated scale factor (null until set)
   furniture, // Array of furniture items { id, x, y, width, height, rotation, name } (dimensions in inches)
   onFurnitureMove, // Callback when furniture is moved/rotated: (id, { x, y, rotation, width, height })
   selectedFurnitureId, // ID of the currently selected furniture item
@@ -290,8 +290,9 @@ function FloorPlanCanvas({
             />
           )}
 
-          {/* Scale Drawing Visuals */}
-          {isSettingScale && scale.points.map((point, index) => {
+          {/* Scale Drawing Visuals - Show points while drawing OR when line is waiting for input */}
+          {((isSettingScale && scale.points.length > 0) || (scale.points.length === 2 && pixelsPerInch === null)) &&
+            scale.points.map((point, index) => {
               // Convert image point to stage point for rendering the circle marker
               const stagePoint = imageToStagePoint(point);
               return (
@@ -307,7 +308,8 @@ function FloorPlanCanvas({
                   />
               );
           })}
-          {isSettingScale && scale.points.length === 2 && ( // Draw line only when 2 points exist
+          {/* Scale Line - Show only when 2 points exist AND scale is not yet set */}
+          {scale.points.length === 2 && pixelsPerInch === null && (
             <Line
               // Convert points (relative to original image) to stage coordinates
               points={scale.points.flatMap(p => {
@@ -416,7 +418,7 @@ function FloorPlanCanvas({
          {/* Message indicating scale input is ready in toolbar */}
          {image && pixelsPerInch === null && !isSettingScale && scale.points.length === 2 && (
               <div className="status-message info">
-                Enter the real-world length for the drawn line in the toolbar.
+                Enter the real-world length for the drawn line in the toolbar (e.g., 10', 5'6").
               </div>
          )}
     </div>
