@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 
 // Default furniture items (dimensions in inches)
 const DEFAULT_FURNITURE = [
@@ -14,7 +14,7 @@ const DEFAULT_FURNITURE = [
 function Toolbar({
   onImageUpload,
   onSetScaleMode,
-  scale,
+  scale, // { points: [{x,y}, {x,y}], pixelLength: number }
   scaleInput,
   onScaleInputChange,
   onSetScaleConfirm,
@@ -25,6 +25,16 @@ function Toolbar({
   const [customWidth, setCustomWidth] = useState('');
   const [customHeight, setCustomHeight] = useState('');
   const [customName, setCustomName] = useState('Custom Item');
+  const scaleInputRef = React.useRef(null); // Ref for the scale input
+
+  // Automatically focus the scale input when it appears
+  useEffect(() => {
+    if (scale.points.length === 2 && scaleInputRef.current) {
+      scaleInputRef.current.focus();
+      // Optionally select the text too
+      // scaleInputRef.current.select();
+    }
+  }, [scale.points]); // Dependency on scale points changing
 
   const handleAddCustomFurniture = () => {
     const width = parseFloat(customWidth);
@@ -45,6 +55,15 @@ function Toolbar({
     }
   };
 
+  // Handle Enter key press in scale input
+  const handleScaleInputKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      onSetScaleConfirm();
+    }
+  };
+
+  // console.log("Toolbar rendering, scale prop:", scale); // Debug log
+
   return (
     <div className="toolbar">
       {/* --- Upload Section --- */}
@@ -62,25 +81,29 @@ function Toolbar({
       {/* --- Scale Section --- */}
       <div className="toolbar-section">
         <h3>2. Set Scale</h3>
-        <button onClick={onSetScaleMode} disabled={isSettingScale}>
+        <button onClick={onSetScaleMode} disabled={isSettingScale || !onImageUpload}>
           {isSettingScale ? 'Click two points on image...' : 'Draw Scale Line'}
         </button>
-        {scale.points.length === 2 && (
+        {/* Conditional rendering for the scale input group */}
+        {scale.points.length === 2 && !isSettingScale && pixelsPerInch === null && (
           <div className="scale-input-group">
             <input
+              ref={scaleInputRef} // Assign ref
               type="number"
               min="0.1"
               step="0.1"
               value={scaleInput}
               onChange={onScaleInputChange}
+              onKeyDown={handleScaleInputKeyDown} // Handle Enter key
               placeholder="Length?"
+              aria-label="Enter scale length in inches"
             />
             <span>inches</span> {/* Assuming inches for now */}
             <button onClick={onSetScaleConfirm}>Set</button>
           </div>
         )}
          {pixelsPerInch !== null && (
-            <p>Scale: 1 inch ≈ {pixelsPerInch.toFixed(2)} pixels</p>
+            <p className="scale-display">Scale: 1 inch ≈ {pixelsPerInch.toFixed(2)} pixels</p>
          )}
       </div>
 
@@ -105,6 +128,7 @@ function Toolbar({
           value={customName}
           onChange={(e) => setCustomName(e.target.value)}
           placeholder="Item Name"
+          aria-label="Custom furniture item name"
         />
         <div className="scale-input-group">
            <input
@@ -113,6 +137,7 @@ function Toolbar({
             onChange={(e) => setCustomWidth(e.target.value)}
             placeholder="Width"
             min="1"
+            aria-label="Custom furniture width in inches"
           />
           <span>" W x</span>
           <input
@@ -121,6 +146,7 @@ function Toolbar({
             onChange={(e) => setCustomHeight(e.target.value)}
             placeholder="Height"
             min="1"
+            aria-label="Custom furniture height in inches"
           />
            <span>" H</span>
         </div>
