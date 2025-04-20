@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react'; // Added useRef
+import React, { useState, useCallback, useEffect, useRef } from 'react'; // Added useEffect
 import Toolbar from './Toolbar';
 import FloorPlanCanvas from './FloorPlanCanvas';
 import {
@@ -96,6 +96,28 @@ function App() {
       setPendingScaleConfirmation(null);
     }
   }, [pendingScaleConfirmation]);
+
+  // Effect for handling keyboard delete
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Check if the event target is an input or textarea
+      const targetTagName = event.target.tagName;
+      const isInputFocused = targetTagName === 'INPUT' || targetTagName === 'TEXTAREA';
+
+      if (!isInputFocused && selectedFurnitureId && (event.key === 'Delete' || event.key === 'Backspace')) {
+        event.preventDefault(); // Prevent default browser behavior (like navigating back)
+        handleDeleteFurniture(selectedFurnitureId);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup function to remove the event listener
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+    // Add handleDeleteFurniture and selectedFurnitureId as dependencies
+  }, [selectedFurnitureId, handleDeleteFurniture]);
 
 
   const handleImageUpload = (event) => {
@@ -218,12 +240,12 @@ function App() {
       setSelectedFurnitureId(id);
   };
 
+  // Make sure handleDeleteFurniture is stable using useCallback
   const handleDeleteFurniture = useCallback((idToDelete) => {
     setFurniture(prev => prev.filter(item => item.id !== idToDelete));
-    if (selectedFurnitureId === idToDelete) {
-      setSelectedFurnitureId(null);
-    }
-  }, [selectedFurnitureId]);
+    // Use functional update for setSelectedFurnitureId if it depends on previous state
+    setSelectedFurnitureId(prevSelectedId => (prevSelectedId === idToDelete ? null : prevSelectedId));
+  }, []); // No dependency on selectedFurnitureId needed here if using functional update
 
   const handleCloneFurniture = useCallback((idToClone) => {
     const itemToClone = furniture.find(item => item.id === idToClone);
