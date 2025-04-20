@@ -1,0 +1,175 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  background-color: #f0f0f0;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  max-width: 1200px; /* Limit overall width */
+  width: 100%;
+}
+
+h1 {
+  color: #333;
+}
+
+.main-content {
+  display: flex;
+  width: 100%;
+  margin-top: 20px;
+  gap: 20px; /* Space between toolbar and canvas */
+  align-items: flex-start; /* Align items at the top */
+}
+
+.toolbar {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 250px; /* Fixed width for the toolbar */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Space between sections in the toolbar */
+}
+
+.toolbar-section {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+.toolbar-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.toolbar h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #555;
+  font-size: 1em;
+}
+
+.toolbar label,
+.toolbar button,
+.toolbar input {
+  display: block;
+  margin-bottom: 8px;
+  width: calc(100% - 16px); /* Adjust width considering padding/border */
+}
+
+.toolbar input[type="file"] {
+ padding: 5px;
+}
+
+.toolbar input[type="number"],
+.toolbar input[type="text"] {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.toolbar button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toolbar button:hover {
+  background-color: #0056b3;
+}
+
+.toolbar button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.scale-input-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.scale-input-group input {
+  flex-grow: 1;
+  width: auto; /* Override block width */
+  margin-bottom: 0;
+}
+.scale-input-group span {
+  white-space: nowrap;
+}
+
+
+.furniture-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.furniture-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 5px;
+  border-bottom: 1px solid #eee;
+}
+.furniture-list li:last-child {
+  border-bottom: none;
+}
+
+.furniture-list span {
+  font-size: 0.9em;
+}
+
+.furniture-list button {
+    width: auto; /* Override block width */
+    padding: 5px 10px;
+    font-size: 0.8em;
+    margin-bottom: 0;
+}
+
+.canvas-container {
+  flex-grow: 1; /* Allow canvas container to take remaining space */
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 10px; /* Padding around the stage */
+  /* Ensure Konva stage fits */
+  display: flex; /* Use flex to help center/contain the stage if needed */
+  justify-content: center;
+  align-items: center;
+  overflow: auto; /* Add scrollbars if stage is too big */
+  max-height: 80vh; /* Limit height */
+}
+
+/* Style for the Konva stage itself if needed */
+.konvajs-content canvas {
+  border: 1px solid #ccc; /* Visual border for the canvas */
+}
+
+.status-message {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.status-message.info {
+    background-color: #e7f3fe;
+    color: #0c5460;
+    border: 1px solid #b8daff;
+}
+
+.status-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
