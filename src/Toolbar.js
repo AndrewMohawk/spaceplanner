@@ -1,58 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// Default furniture items (dimensions in inches)
-const DEFAULT_FURNITURE = [
-  { id: 'couch-1', name: 'Sofa (3-seat)', width: 84, height: 38 },
-  { id: 'couch-2', name: 'Loveseat', width: 60, height: 38 },
-  { id: 'chair-1', name: 'Armchair', width: 35, height: 35 },
-  { id: 'bed-q', name: 'Bed (Queen)', width: 60, height: 80 },
-  { id: 'bed-k', name: 'Bed (King)', width: 76, height: 80 },
-  { id: 'desk-1', name: 'Desk', width: 48, height: 24 },
-  { id: 'table-dr', name: 'Dining Table (6)', width: 60, height: 36 },
-];
-
 // Helper function to parse dimension strings (e.g., "10'", "5'6\"", "7.5'", "72\"") into inches
 function parseDimensionString(input) {
   if (!input || typeof input !== 'string') {
     return null;
   }
-
   input = input.trim();
-
-  // Match feet and inches (e.g., 10'6", 5' 8", 12' 0")
   const feetInchesMatch = input.match(/^(\d+(\.\d+)?)\s*'\s*(\d+(\.\d+)?)\s*"?$/);
   if (feetInchesMatch) {
     const feet = parseFloat(feetInchesMatch[1]);
     const inches = parseFloat(feetInchesMatch[3]);
     return (feet * 12) + inches;
   }
-
-  // Match only feet (e.g., 10', 7.5')
   const feetOnlyMatch = input.match(/^(\d+(\.\d+)?)\s*'$/);
   if (feetOnlyMatch) {
     const feet = parseFloat(feetOnlyMatch[1]);
     return feet * 12;
   }
-
-  // Match only inches (e.g., 72", 36) - allow number without "
   const inchesOnlyMatch = input.match(/^(\d+(\.\d+)?)\s*"?$/);
   if (inchesOnlyMatch) {
     const inches = parseFloat(inchesOnlyMatch[1]);
     return inches;
   }
-
-  // Invalid format
   return null;
 }
 
 
 function Toolbar({
+  // Furniture Template Props
+  availableFurnitureTemplates, // Combined list (defaults + custom)
+  onAddNewCustomFurnitureTemplate, // Function to add a new template type
+  onAddFurniture, // Function to add an instance of a template to canvas
+
   // Placed Item Props
   placedFurniture,
   selectedFurnitureId,
   onSelectFurniture,
   onDeleteFurniture,
   onCloneFurniture,
+
   // Other Props
   onImageUpload,
   onSetScaleMode,
@@ -62,12 +48,16 @@ function Toolbar({
   onSetScaleConfirm,
   isSettingScale,
   pixelsPerInch,
-  onAddFurniture,
+  // onAddFurniture prop is now used differently (see above)
 }) {
   const [customWidth, setCustomWidth] = useState('');
   const [customHeight, setCustomHeight] = useState('');
   const [customName, setCustomName] = useState('Custom Item');
   const scaleInputRef = useRef(null);
+
+  // Separate default and custom templates for display
+  const defaultTemplates = availableFurnitureTemplates.filter(t => t.isDefault);
+  const customTemplates = availableFurnitureTemplates.filter(t => !t.isDefault);
 
   useEffect(() => {
     if (scale.points.length === 2 && pixelsPerInch === null && !isSettingScale && scaleInputRef.current) {
@@ -75,19 +65,23 @@ function Toolbar({
     }
   }, [scale.points, pixelsPerInch, isSettingScale]);
 
-  const handleAddCustomFurniture = () => {
+  // This handler now calls the App's function to register the template
+  const handleAddCustomFurnitureTemplate = () => {
     const width = parseFloat(customWidth);
     const height = parseFloat(customHeight);
-    if (width > 0 && height > 0) {
-      onAddFurniture({
-        // Use a generic id prefix for custom items
-        id: `custom-${Date.now()}`,
-        name: customName || 'Custom Item',
+    if (width > 0 && height > 0 && customName.trim()) {
+      // Call the handler passed from App.js
+      onAddNewCustomFurnitureTemplate({
+        name: customName.trim(),
         width: width,
         height: height,
       });
+      // Optionally clear fields after adding
+      // setCustomName('Custom Item');
+      // setCustomWidth('');
+      // setCustomHeight('');
     } else {
-      alert('Please enter valid positive numbers for custom width and height.');
+      alert('Please enter a valid name, positive width, and positive height for the custom item.');
     }
   };
 
@@ -168,25 +162,55 @@ function Toolbar({
       {/* --- Add Furniture Section --- */}
       <div className="toolbar-section">
         <h3>Add Furniture (inches)</h3>
+
+        {/* Default Templates List */}
         <p>Defaults:</p>
-        <ul className="furniture-list">
-          {DEFAULT_FURNITURE.map((item) => (
-            <li key={item.id}>
-              <span>{item.name} ({item.width}"x{item.height}")</span>
-              <button onClick={() => onAddFurniture(item)} disabled={pixelsPerInch === null}>
-                Add
-              </button>
-            </li>
-          ))}
-        </ul>
+        {defaultTemplates.length > 0 ? (
+            <ul className="furniture-list">
+            {defaultTemplates.map((item) => (
+                <li key={item.id}>
+                <span>{item.name} ({item.width}"x{item.height}")</span>
+                <button onClick={() => onAddFurniture(item)} disabled={pixelsPerInch === null}>
+                    Add
+                </button>
+                </li>
+            ))}
+            </ul>
+        ) : (
+            <p>No default items.</p> /* Should not happen with current setup */
+        )}
+
+
         <hr />
-        <p>Custom:</p>
+
+        {/* Custom Templates List */}
+        <p>Custom Items:</p>
+        {customTemplates.length > 0 ? (
+            <ul className="furniture-list">
+            {customTemplates.map((item) => (
+                <li key={item.id}>
+                <span>{item.name} ({item.width}"x{item.height}")</span>
+                {/* TODO: Add delete/edit buttons for custom templates later? */}
+                <button onClick={() => onAddFurniture(item)} disabled={pixelsPerInch === null}>
+                    Add
+                </button>
+                </li>
+            ))}
+            </ul>
+        ) : (
+             <p>No custom items saved yet.</p>
+        )}
+
+
+        <hr />
+        {/* Input for NEW Custom Item */}
+        <p>Create New Custom Item:</p>
          <input
           type="text"
           value={customName}
           onChange={(e) => setCustomName(e.target.value)}
           placeholder="Item Name"
-          aria-label="Custom furniture item name"
+          aria-label="New custom furniture item name"
         />
         <div className="scale-input-group">
            <input
@@ -195,7 +219,7 @@ function Toolbar({
             onChange={(e) => setCustomWidth(e.target.value)}
             placeholder="Width"
             min="1"
-            aria-label="Custom furniture width in inches"
+            aria-label="New custom furniture width in inches"
           />
           <span>" W x</span>
           <input
@@ -204,12 +228,13 @@ function Toolbar({
             onChange={(e) => setCustomHeight(e.target.value)}
             placeholder="Height"
             min="1"
-            aria-label="Custom furniture height in inches"
+            aria-label="New custom furniture height in inches"
           />
            <span>" H</span>
         </div>
-        <button onClick={handleAddCustomFurniture} disabled={pixelsPerInch === null}>
-          Add Custom Item
+        {/* This button now adds the template definition */}
+        <button onClick={handleAddCustomFurnitureTemplate} disabled={pixelsPerInch === null}>
+          Save & Add Custom Item
         </button>
       </div>
 
@@ -234,7 +259,6 @@ function Toolbar({
                                     className="icon-button clone-button" // Use classes for styling
                                     aria-label={`Clone ${item.name}`}
                                 >
-                                    {/* Placeholder for Clone Icon (e.g., using text or SVG) */}
                                     Clone
                                 </button>
                                 <button
@@ -243,7 +267,6 @@ function Toolbar({
                                     className="icon-button delete-button" // Use classes for styling
                                     aria-label={`Delete ${item.name}`}
                                 >
-                                    {/* Placeholder for Delete Icon (e.g., using text or SVG) */}
                                     Del
                                 </button>
                             </div>
