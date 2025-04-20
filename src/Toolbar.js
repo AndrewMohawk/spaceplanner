@@ -137,8 +137,8 @@ function Toolbar({
               value={scaleInput} // Controlled input with string value
               onChange={onScaleInputChange} // Update string value in App state
               onKeyDown={handleScaleInputKeyDown} // Handle Enter key
-              placeholder="e.g., 10' or 5'6\\\" or 72\\\"" // Escaped inner quotes
-              aria-label="Enter scale length (e.g., 10', 5'6\\\", 72\\\")" // Escaped inner quotes
+              placeholder="e.g., 10' or 5'6&quot; or 72&quot;" // Use &quot; for inner quotes
+              aria-label="Enter scale length (e.g., 10', 5'6&quot;, 72&quot;)" // Use &quot; for inner quotes
             />
             {/* Removed span with "inches" */}
             <button onClick={handleConfirmScaleValue}>Set</button> {/* Calls internal handler */}
