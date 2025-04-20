@@ -172,7 +172,7 @@ function Toolbar({
            </button>
             <button
                onClick={onTriggerImport}
-               disabled={!onImageUpload || isSettingScale} // Disable if no image loaded or setting scale
+               disabled={isSettingScale} // Allow import even if no image loaded yet
                className="action-button import-button" // Add class for specific styling
             >
                Import Layout

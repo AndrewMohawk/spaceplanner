@@ -126,6 +126,13 @@ h1 {
     margin-bottom: 10px; /* Space between action buttons */
 }
 
+.toolbar .share-button {
+    background-color: #fd7e14; /* Orange */
+}
+.toolbar .share-button:hover {
+    background-color: #e66a00;
+}
+
 .toolbar .export-button {
     background-color: #17a2b8; /* Teal */
 }
@@ -366,4 +373,14 @@ h1 {
     color: #333;
     margin-top: 10px;
     margin-bottom: 0;
+}
+
+/* Basic Loading Indicator */
+.loading-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-size: 1.5em;
+    color: #555;
 }

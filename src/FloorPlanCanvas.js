@@ -62,29 +62,49 @@ function FloorPlanCanvas({
 
   // --- Image Loading and Scaling ---
   useEffect(() => {
-    let objectUrl = null;
-    if (image) {
-      const img = new window.Image();
+    let objectUrl = null; // Keep track of created object URLs
+    const img = new window.Image();
+
+    img.onload = () => {
+      setImageElement(img);
+      setImageSize({ width: img.width, height: img.height });
+      // Revoke object URL only if it was created for a File object
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = null; // Clear the tracker
+      }
+    };
+    img.onerror = () => {
+      console.error("Error loading image");
+      setImageElement(null);
+      setImageSize({ width: 0, height: 0 });
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl); // Clean up on error too
+        objectUrl = null;
+      }
+    };
+
+    if (image instanceof File) {
+      // Create an object URL for the File object
       objectUrl = URL.createObjectURL(image);
       img.src = objectUrl;
-      img.onload = () => {
-        setImageElement(img);
-        setImageSize({ width: img.width, height: img.height });
-      };
-      img.onerror = () => {
-        console.error("Error loading image");
-        setImageElement(null);
-        setImageSize({ width: 0, height: 0 });
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
-      };
+    } else if (typeof image === 'string' && image) {
+      // Assume it's a URL string
+      img.crossOrigin = "Anonymous"; // Handle potential CORS issues if image is from another domain
+      img.src = image;
     } else {
+      // No valid image source
       setImageElement(null);
       setImageSize({ width: 0, height: 0 });
     }
+
+    // Cleanup function: revoke object URL if component unmounts before onload/onerror
     return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
-  }, [image]);
+  }, [image]); // Rerun when the image prop changes
 
   useEffect(() => {
       if (imageElement && stageSize.width > 0 && stageSize.height > 0 && imageSize.width > 0) {
@@ -224,7 +244,7 @@ function FloorPlanCanvas({
           {/* Background Image */}
           {imageElement && displayedImageWidth > 0 && (
             <KonvaImage
-              image={imageElement}
+              image={imageElement} // KonvaImage handles the loaded Image object
               x={imageOffsetX}
               y={imageOffsetY}
               width={displayedImageWidth}

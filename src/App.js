@@ -119,6 +119,9 @@ function App() {
       const targetTagName = event.target.tagName;
       const isInputFocused = targetTagName === 'INPUT' || targetTagName === 'TEXTAREA';
 
+      // Prevent delete if modal is open
+      if (isEditModalOpen) return;
+
       if (!isInputFocused && selectedFurnitureId && (event.key === 'Delete' || event.key === 'Backspace')) {
         event.preventDefault();
         handleDeleteFurniture(selectedFurnitureId);
@@ -128,7 +131,8 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedFurnitureId, handleDeleteFurniture]);
+    // Add isEditModalOpen to dependencies
+  }, [selectedFurnitureId, handleDeleteFurniture, isEditModalOpen]);
 
   // --- Copy / Paste Logic ---
   const handleCopyItem = useCallback(() => {
@@ -166,6 +170,9 @@ function App() {
           const targetTagName = event.target.tagName;
           const isInputFocused = targetTagName === 'INPUT' || targetTagName === 'TEXTAREA';
 
+          // Prevent copy/paste if modal is open
+          if (isEditModalOpen) return;
+
           // Check for Ctrl+C or Cmd+C
           if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
               if (!isInputFocused && selectedFurnitureId) {
@@ -187,7 +194,8 @@ function App() {
       return () => {
           window.removeEventListener('keydown', handleKeyDown);
       };
-  }, [selectedFurnitureId, copiedItemData, handleCopyItem, handlePasteItem]); // Dependencies
+      // Add dependencies
+  }, [selectedFurnitureId, copiedItemData, handleCopyItem, handlePasteItem, isEditModalOpen]);
 
 
   const handleImageUpload = (event) => {
@@ -384,13 +392,15 @@ function App() {
         if (!importedData || typeof importedData !== 'object' || !importedData.imageId || typeof importedData.pixelsPerInch !== 'number' || !Array.isArray(importedData.furniture)) {
             throw new Error("Invalid file format.");
         }
-        if (importedData.imageId !== floorplanImageId) {
+        // Allow import only if NO image is loaded OR if the IDs match
+        if (floorplanImage && importedData.imageId !== floorplanImageId) {
             const currentImageName = floorplanImageId?.split('|')[0] || 'current image';
             const importedImageName = importedData.imageId.split('|')[0] || 'imported layout';
-            alert(`Import failed: Layout is for "${importedImageName}", but current image is "${currentImageName}". Load correct image first.`);
+            alert(`Import failed: Layout is for "${importedImageName}", but current image is "${currentImageName}". Upload the correct image first or clear the current image.`);
             if (importFileRef.current) importFileRef.current.value = "";
             return;
         }
+
         // Ensure imported items have default color/opacity if missing from older exports
         const furnitureWithDefaults = importedData.furniture.map(item => ({
             ...item,
@@ -400,23 +410,24 @@ function App() {
 
         setPixelsPerInch(importedData.pixelsPerInch);
         setFurniture(furnitureWithDefaults); // Set furniture with defaults applied
-        setSelectedFurnitureId(null);
-        setIsSettingScale(false);
-        setScaleState({ points: [], pixelLength: 0 });
-        setScaleInput('');
-        setPendingScaleConfirmation(null);
-        setCopiedItemData(null); // Clear clipboard on import
+        // If importing over empty state, maybe try to load image based on ID? Complex.
+        // For now, just set the ID if it wasn't set.
+        if (!floorplanImageId) {
+            setFloorplanImageId(importedData.imageId);
+            // We still don't have the image File/URL here for the canvas!
+            alert("Layout data imported, but you may need to manually upload the corresponding floor plan image.");
+        }
+        setSelectedFurnitureId(null); setIsSettingScale(false); setScaleState({ points: [], pixelLength: 0 });
+        setScaleInput(''); setPendingScaleConfirmation(null); setCopiedItemData(null); // Clear clipboard on import
         alert("Layout imported successfully!");
       } catch (error) {
-        console.error("Error importing layout:", error);
-        alert(`Failed to import layout: ${error.message}`);
+        console.error("Error importing layout:", error); alert(`Failed to import layout: ${error.message}`);
       } finally {
           if (importFileRef.current) importFileRef.current.value = "";
       }
     };
     reader.onerror = (e) => {
-        console.error("Error reading file:", e);
-        alert("Failed to read the selected file.");
+        console.error("Error reading file:", e); alert("Failed to read the selected file.");
         if (importFileRef.current) importFileRef.current.value = "";
     };
     reader.readAsText(file);
