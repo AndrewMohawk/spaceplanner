@@ -38,6 +38,7 @@ function Toolbar({
   onSelectFurniture,
   onDeleteFurniture,
   onCloneFurniture,
+  onOpenEditModal, // Handler to open the edit modal
 
   // Other Props
   onImageUpload,
@@ -292,13 +293,23 @@ function Toolbar({
                         >
                             <span className="item-name">{item.name}</span>
                             <div className="item-actions">
+                                 <button
+                                    onClick={(e) => { e.stopPropagation(); onOpenEditModal(item.id); }} // Prevent li click
+                                    title="Edit Item"
+                                    className="icon-button edit-button" // Use classes for styling
+                                    aria-label={`Edit ${item.name}`}
+                                >
+                                    {/* Placeholder for Edit Icon (e.g., Gear emoji or SVG) */}
+                                    ⚙️
+                                </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onCloneFurniture(item.id); }} // Prevent li click
                                     title="Clone Item"
                                     className="icon-button clone-button" // Use classes for styling
                                     aria-label={`Clone ${item.name}`}
                                 >
-                                    Clone
+                                    {/* Placeholder for Clone Icon */}
+                                    ❐
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onDeleteFurniture(item.id); }} // Prevent li click
@@ -306,7 +317,8 @@ function Toolbar({
                                     className="icon-button delete-button" // Use classes for styling
                                     aria-label={`Delete ${item.name}`}
                                 >
-                                    Del
+                                    {/* Placeholder for Delete Icon */}
+                                    🗑️
                                 </button>
                             </div>
                         </li>

@@ -1,3 +1,6 @@
+/* Import Modal styles */
+@import url('./EditFurnitureModal.css');
+
 html, body, #root {
   height: 100%; /* Ensure root elements take full height */
   margin: 0;
@@ -280,25 +283,29 @@ h1 {
 
 .placed-furniture-list .icon-button {
     padding: 3px 6px;
-    font-size: 0.8em;
+    font-size: 1em; /* Make icons slightly larger */
     line-height: 1;
     width: auto; /* Let button size naturally */
     border-radius: 3px;
+    background: none; /* Remove background */
+    border: none; /* Remove border */
+    color: #6c757d; /* Default icon color */
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.placed-furniture-list .icon-button:hover {
+    color: #343a40; /* Darker on hover */
 }
 
+/* Specific icon button colors if needed */
+.placed-furniture-list .edit-button {
+    /* color: #007bff; */ /* Blue */
+}
 .placed-furniture-list .clone-button {
-    background-color: #28a745;
+    /* color: #28a745; */ /* Green */
 }
-.placed-furniture-list .clone-button:hover {
-    background-color: #218838;
-}
-
-/* Use specific delete button style for placed items */
 .placed-furniture-list .delete-button {
-    background-color: #dc3545;
-}
-.placed-furniture-list .delete-button:hover {
-    background-color: #c82333;
+    /* color: #dc3545; */ /* Red */
 }
 
 

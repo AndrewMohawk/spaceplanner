@@ -1,23 +1,24 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react'; // Added useEffect
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Toolbar from './Toolbar';
 import FloorPlanCanvas from './FloorPlanCanvas';
+import EditFurnitureModal from './EditFurnitureModal'; // Import the modal
 import {
     saveScaleForImage,
     getScaleForImage,
     saveCustomFurnitureTemplates,
     loadCustomFurnitureTemplates
-} from './localStorageUtils'; // Import localStorage utilities
+} from './localStorageUtils';
 import './App.css';
 
 // Default furniture items (dimensions in inches) - Keep these hardcoded as the base
 const DEFAULT_FURNITURE_TEMPLATES = [
-  { id: 'couch-1', name: 'Sofa (3-seat)', width: 84, height: 38, isDefault: true },
-  { id: 'couch-2', name: 'Loveseat', width: 60, height: 38, isDefault: true },
-  { id: 'chair-1', name: 'Armchair', width: 35, height: 35, isDefault: true },
-  { id: 'bed-q', name: 'Bed (Queen)', width: 60, height: 80, isDefault: true },
-  { id: 'bed-k', name: 'Bed (King)', width: 76, height: 80, isDefault: true },
-  { id: 'desk-1', name: 'Desk', width: 48, height: 24, isDefault: true },
-  { id: 'table-dr', name: 'Dining Table (6)', width: 60, height: 36, isDefault: true },
+  { id: 'couch-1', name: 'Sofa (3-seat)', width: 84, height: 38, isDefault: true, color: '#6496FF', opacity: 0.7 },
+  { id: 'couch-2', name: 'Loveseat', width: 60, height: 38, isDefault: true, color: '#6496FF', opacity: 0.7 },
+  { id: 'chair-1', name: 'Armchair', width: 35, height: 35, isDefault: true, color: '#6496FF', opacity: 0.7 },
+  { id: 'bed-q', name: 'Bed (Queen)', width: 60, height: 80, isDefault: true, color: '#FFB6C1', opacity: 0.7 },
+  { id: 'bed-k', name: 'Bed (King)', width: 76, height: 80, isDefault: true, color: '#FFB6C1', opacity: 0.7 },
+  { id: 'desk-1', name: 'Desk', width: 48, height: 24, isDefault: true, color: '#DEB887', opacity: 0.7 },
+  { id: 'table-dr', name: 'Dining Table (6)', width: 60, height: 36, isDefault: true, color: '#DEB887', opacity: 0.7 },
 ];
 
 
@@ -34,21 +35,18 @@ function downloadJson(data, filename) {
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
     objectUrl = URL.createObjectURL(blob);
-
     const link = document.createElement("a");
     link.href = objectUrl;
     link.download = filename;
-    document.body.appendChild(link); // Required for Firefox
+    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link); // Clean up link element
-
+    document.body.removeChild(link);
   } catch (error) {
       console.error("Error creating download link:", error);
       alert("Failed to initiate download.");
   } finally {
-      // Revoke the object URL after a short delay to allow the download to start
       if (objectUrl) {
-          setTimeout(() => URL.revokeObjectURL(objectUrl), 100); // 100ms delay
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
       }
   }
 }
@@ -56,7 +54,7 @@ function downloadJson(data, filename) {
 
 function App() {
   const [floorplanImage, setFloorplanImage] = useState(null);
-  const [floorplanImageId, setFloorplanImageId] = useState(null); // Store identifier (name|size)
+  const [floorplanImageId, setFloorplanImageId] = useState(null);
   const [isSettingScale, setIsSettingScale] = useState(false);
   const [scaleState, setScaleState] = useState({ points: [], pixelLength: 0 });
   const [scaleInput, setScaleInput] = useState('');
@@ -67,14 +65,26 @@ function App() {
       ...DEFAULT_FURNITURE_TEMPLATES
   ]);
   const [pendingScaleConfirmation, setPendingScaleConfirmation] = useState(null);
-  const importFileRef = useRef(null); // Ref for the hidden file input
+  const importFileRef = useRef(null);
+  // State for Edit Modal
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  // State for Copy/Paste
+  const [copiedItemData, setCopiedItemData] = useState(null);
 
   // Load custom furniture templates on initial mount
   useEffect(() => {
     const loadedCustomTemplates = loadCustomFurnitureTemplates();
+    // Ensure loaded templates also have default color/opacity if missing
+    const customWithDefaults = loadedCustomTemplates.map(t => ({
+        ...t,
+        color: t.color || '#AAAAAA', // Default grey for custom
+        opacity: t.opacity !== undefined ? t.opacity : 0.7,
+        isDefault: false
+    }));
     setAvailableFurnitureTemplates([
         ...DEFAULT_FURNITURE_TEMPLATES,
-        ...loadedCustomTemplates.map(t => ({ ...t, isDefault: false }))
+        ...customWithDefaults
     ]);
   }, []);
 
@@ -98,35 +108,86 @@ function App() {
   }, [pendingScaleConfirmation]);
 
   // Define handleDeleteFurniture BEFORE the useEffect that uses it
-  // Make sure handleDeleteFurniture is stable using useCallback
   const handleDeleteFurniture = useCallback((idToDelete) => {
     setFurniture(prev => prev.filter(item => item.id !== idToDelete));
-    // Use functional update for setSelectedFurnitureId if it depends on previous state
     setSelectedFurnitureId(prevSelectedId => (prevSelectedId === idToDelete ? null : prevSelectedId));
-  }, []); // No dependency on selectedFurnitureId needed here if using functional update
+  }, []);
 
   // Effect for handling keyboard delete
   useEffect(() => {
     const handleKeyDown = (event) => {
-      // Check if the event target is an input or textarea
       const targetTagName = event.target.tagName;
       const isInputFocused = targetTagName === 'INPUT' || targetTagName === 'TEXTAREA';
 
       if (!isInputFocused && selectedFurnitureId && (event.key === 'Delete' || event.key === 'Backspace')) {
-        event.preventDefault(); // Prevent default browser behavior (like navigating back)
-        // Now handleDeleteFurniture is guaranteed to be initialized
+        event.preventDefault();
         handleDeleteFurniture(selectedFurnitureId);
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
-
-    // Cleanup function to remove the event listener
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-    // Add handleDeleteFurniture and selectedFurnitureId as dependencies
   }, [selectedFurnitureId, handleDeleteFurniture]);
+
+  // --- Copy / Paste Logic ---
+  const handleCopyItem = useCallback(() => {
+      if (!selectedFurnitureId) return;
+      const itemToCopy = furniture.find(item => item.id === selectedFurnitureId);
+      if (itemToCopy) {
+          setCopiedItemData({ ...itemToCopy }); // Store a copy of the item's data
+          console.log("Copied item:", itemToCopy.name);
+          // Optionally provide user feedback (e.g., brief message)
+      }
+  }, [selectedFurnitureId, furniture]);
+
+  const handlePasteItem = useCallback(() => {
+      if (!copiedItemData || pixelsPerInch === null) return;
+
+      // Create a new unique ID
+      const templatePrefix = copiedItemData.id.substring(0, copiedItemData.id.lastIndexOf('-')) || 'paste';
+      const uniqueId = `${templatePrefix}-${Date.now()}`;
+
+      const newItem = {
+          ...copiedItemData, // Copy all properties (name, w, h, color, opacity, rotation)
+          id: uniqueId,
+          // Offset the pasted item slightly
+          x: copiedItemData.x + (20 / pixelsPerInch),
+          y: copiedItemData.y + (20 / pixelsPerInch),
+      };
+      setFurniture(prev => [...prev, newItem]);
+      setSelectedFurnitureId(uniqueId); // Select the newly pasted item
+      console.log("Pasted item:", newItem.name);
+  }, [copiedItemData, pixelsPerInch]);
+
+  // Effect for handling Copy/Paste keyboard shortcuts
+  useEffect(() => {
+      const handleKeyDown = (event) => {
+          const targetTagName = event.target.tagName;
+          const isInputFocused = targetTagName === 'INPUT' || targetTagName === 'TEXTAREA';
+
+          // Check for Ctrl+C or Cmd+C
+          if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+              if (!isInputFocused && selectedFurnitureId) {
+                  event.preventDefault();
+                  handleCopyItem();
+              }
+          }
+
+          // Check for Ctrl+V or Cmd+V
+          if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+              if (!isInputFocused && copiedItemData) {
+                  event.preventDefault();
+                  handlePasteItem();
+              }
+          }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+          window.removeEventListener('keydown', handleKeyDown);
+      };
+  }, [selectedFurnitureId, copiedItemData, handleCopyItem, handlePasteItem]); // Dependencies
 
 
   const handleImageUpload = (event) => {
@@ -135,8 +196,6 @@ function App() {
       const identifier = `${file.name}|${file.size}`;
       setFloorplanImage(file);
       setFloorplanImageId(identifier);
-
-      // Reset state *before* checking for saved scale
       setPixelsPerInch(null);
       setScaleState({ points: [], pixelLength: 0 });
       setScaleInput('');
@@ -144,6 +203,7 @@ function App() {
       setIsSettingScale(false);
       setSelectedFurnitureId(null);
       setPendingScaleConfirmation(null);
+      setCopiedItemData(null); // Clear clipboard on new image
 
       const existingScale = getScaleForImage(identifier);
       if (existingScale !== null) {
@@ -200,6 +260,7 @@ function App() {
     }
   };
 
+  // Adds an instance of a furniture template
   const handleAddFurniture = (itemTemplate) => {
     if (pixelsPerInch === null) {
       alert("Please set the scale before adding furniture.");
@@ -207,30 +268,38 @@ function App() {
     }
     const uniqueId = `${itemTemplate.id}-${Date.now()}`;
     const newItem = {
-      ...itemTemplate,
+      // Base properties from template
+      name: itemTemplate.name,
+      width: itemTemplate.width,
+      height: itemTemplate.height,
+      // Default appearance or from template
+      color: itemTemplate.color || '#AAAAAA', // Default grey if template lacks color
+      opacity: itemTemplate.opacity !== undefined ? itemTemplate.opacity : 0.7,
+      // Instance specific properties
       id: uniqueId,
       x: (itemTemplate.width / 2) + 50 / (pixelsPerInch || 1),
       y: (itemTemplate.height / 2) + 50 / (pixelsPerInch || 1),
       rotation: 0,
-      isDefault: undefined,
     };
-    delete newItem.isDefault;
     setFurniture(prev => [...prev, newItem]);
     setSelectedFurnitureId(uniqueId);
   };
 
+  // Adds a *new* custom furniture template
   const handleAddNewCustomFurnitureTemplate = (newTemplateData) => {
       const templateId = `custom-${Date.now()}`;
       const newTemplate = {
-          ...newTemplateData,
+          ...newTemplateData, // name, width, height
           id: templateId,
+          color: '#AAAAAA', // Default color for new custom items
+          opacity: 0.7,     // Default opacity
           isDefault: false,
       };
       const updatedTemplates = [...availableFurnitureTemplates, newTemplate];
       setAvailableFurnitureTemplates(updatedTemplates);
       const customTemplatesToSave = updatedTemplates.filter(t => !t.isDefault);
       saveCustomFurnitureTemplates(customTemplatesToSave);
-      handleAddFurniture(newTemplate);
+      handleAddFurniture(newTemplate); // Add instance immediately
   };
 
 
@@ -249,7 +318,7 @@ function App() {
       setSelectedFurnitureId(id);
   };
 
-  // handleDeleteFurniture is defined above the useEffect hook now
+  // handleDeleteFurniture defined above
 
   const handleCloneFurniture = useCallback((idToClone) => {
     const itemToClone = furniture.find(item => item.id === idToClone);
@@ -257,7 +326,7 @@ function App() {
       const templatePrefix = itemToClone.id.substring(0, itemToClone.id.lastIndexOf('-')) || 'clone';
       const uniqueId = `${templatePrefix}-${Date.now()}`;
       const newItem = {
-        ...itemToClone,
+        ...itemToClone, // Clone all properties including current appearance
         id: uniqueId,
         x: itemToClone.x + (20 / pixelsPerInch),
         y: itemToClone.y + (20 / pixelsPerInch),
@@ -267,106 +336,103 @@ function App() {
     }
   }, [furniture, pixelsPerInch]);
 
-  // --- Import / Export ---
+  // --- Edit Modal Handlers ---
+  const handleOpenEditModal = (itemId) => {
+      setEditingItemId(itemId);
+      setIsEditModalOpen(true);
+  };
 
+  const handleCloseEditModal = () => {
+      setIsEditModalOpen(false);
+      setEditingItemId(null);
+  };
+
+  const handleUpdateFurnitureItem = (itemId, updatedProps) => {
+      setFurniture(prev =>
+          prev.map(item =>
+              item.id === itemId
+                  ? { ...item, ...updatedProps } // Merge updated name, color, opacity
+                  : item
+          )
+      );
+      handleCloseEditModal(); // Close modal after saving
+  };
+
+  // --- Import / Export ---
   const handleExportLayout = () => {
     if (!floorplanImageId || pixelsPerInch === null) {
         alert("Please upload an image and set the scale before exporting.");
         return;
     }
-
     const layoutData = {
-        version: 1, // Add a version number for future compatibility
+        version: 1,
         imageId: floorplanImageId,
         pixelsPerInch: pixelsPerInch,
-        furniture: furniture, // Export the current furniture state
+        furniture: furniture, // Includes color/opacity now
     };
-
     const filename = `${floorplanImageId.split('|')[0] || 'layout'}.floorplan.json`;
-    downloadJson(layoutData, filename); // Use the updated download function
+    downloadJson(layoutData, filename);
   };
 
   const handleImportLayout = (event) => {
     const file = event.target.files[0];
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const importedData = JSON.parse(e.target.result);
-
-        // Basic validation
         if (!importedData || typeof importedData !== 'object' || !importedData.imageId || typeof importedData.pixelsPerInch !== 'number' || !Array.isArray(importedData.furniture)) {
             throw new Error("Invalid file format.");
         }
-
-        // **Crucial Check:** Compare imported imageId with current imageId
         if (importedData.imageId !== floorplanImageId) {
             const currentImageName = floorplanImageId?.split('|')[0] || 'current image';
             const importedImageName = importedData.imageId.split('|')[0] || 'imported layout';
-            alert(`Import failed: The layout file is for "${importedImageName}", but the currently loaded image is "${currentImageName}". Please load the correct image first.`);
-            // Reset the file input value so the same file can be selected again if needed
-            if (importFileRef.current) {
-                importFileRef.current.value = "";
-            }
+            alert(`Import failed: Layout is for "${importedImageName}", but current image is "${currentImageName}". Load correct image first.`);
+            if (importFileRef.current) importFileRef.current.value = "";
             return;
         }
+        // Ensure imported items have default color/opacity if missing from older exports
+        const furnitureWithDefaults = importedData.furniture.map(item => ({
+            ...item,
+            color: item.color || '#AAAAAA', // Default grey if missing
+            opacity: item.opacity !== undefined ? item.opacity : 0.7, // Default opacity if missing
+        }));
 
-        // Restore state from imported data
         setPixelsPerInch(importedData.pixelsPerInch);
-        setFurniture(importedData.furniture);
-
-        // Reset other potentially conflicting states
+        setFurniture(furnitureWithDefaults); // Set furniture with defaults applied
         setSelectedFurnitureId(null);
         setIsSettingScale(false);
         setScaleState({ points: [], pixelLength: 0 });
         setScaleInput('');
         setPendingScaleConfirmation(null);
-
+        setCopiedItemData(null); // Clear clipboard on import
         alert("Layout imported successfully!");
-
       } catch (error) {
         console.error("Error importing layout:", error);
         alert(`Failed to import layout: ${error.message}`);
       } finally {
-          // Reset the file input value so the same file can be selected again
-          if (importFileRef.current) {
-              importFileRef.current.value = "";
-          }
+          if (importFileRef.current) importFileRef.current.value = "";
       }
     };
     reader.onerror = (e) => {
         console.error("Error reading file:", e);
         alert("Failed to read the selected file.");
-        // Reset the file input value
-        if (importFileRef.current) {
-            importFileRef.current.value = "";
-        }
+        if (importFileRef.current) importFileRef.current.value = "";
     };
     reader.readAsText(file);
   };
 
-  // Function to trigger the hidden file input
   const triggerImportFileSelect = () => {
-      if (importFileRef.current) {
-          importFileRef.current.click();
-      }
+      if (importFileRef.current) importFileRef.current.click();
   };
 
+  // Find the item being edited for the modal
+  const itemToEdit = furniture.find(item => item.id === editingItemId);
 
   return (
     <div className="App">
       {/* Hidden file input for import */}
-      <input
-        type="file"
-        ref={importFileRef}
-        onChange={handleImportLayout}
-        accept=".json,.floorplan" // Accept json or custom extension
-        style={{ display: 'none' }}
-        aria-hidden="true"
-      />
+      <input type="file" ref={importFileRef} onChange={handleImportLayout} accept=".json,.floorplan" style={{ display: 'none' }} aria-hidden="true" />
 
       <h1>Floor Plan Furniture Arranger</h1>
       <div className="main-content">
@@ -382,6 +448,7 @@ function App() {
           onSelectFurniture={handleSelectFurniture}
           onDeleteFurniture={handleDeleteFurniture}
           onCloneFurniture={handleCloneFurniture}
+          onOpenEditModal={handleOpenEditModal} // Pass handler to open modal
 
           // Image & Scale Props
           onImageUpload={handleImageUpload}
@@ -395,7 +462,7 @@ function App() {
 
           // Import / Export Handlers
           onExportLayout={handleExportLayout}
-          onTriggerImport={triggerImportFileSelect} // Pass function to trigger file input
+          onTriggerImport={triggerImportFileSelect}
         />
         <FloorPlanCanvas
           image={floorplanImage}
@@ -403,12 +470,21 @@ function App() {
           onSetScalePoints={handleSetScalePoints}
           scale={scaleState}
           pixelsPerInch={pixelsPerInch}
-          furniture={furniture}
+          furniture={furniture} // Pass furniture with color/opacity
           onFurnitureMove={handleFurnitureMove}
           selectedFurnitureId={selectedFurnitureId}
           onSelectFurniture={handleSelectFurniture}
         />
       </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && itemToEdit && (
+          <EditFurnitureModal
+              item={itemToEdit}
+              onSave={handleUpdateFurnitureItem}
+              onClose={handleCloseEditModal}
+          />
+      )}
     </div>
   );
 }

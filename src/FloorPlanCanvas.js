@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Stage, Layer, Image as KonvaImage, Line, Rect, Transformer, Circle, Group, Text } from 'react-konva'; // Added Group, Text
-import Konva from 'konva'; // Import Konva namespace
+import { Stage, Layer, Image as KonvaImage, Line, Rect, Transformer, Circle, Group, Text } from 'react-konva';
+import Konva from 'konva';
 
 // Helper function to calculate distance
 const getDistance = (p1, p2) => {
@@ -11,39 +11,36 @@ const getDistance = (p1, p2) => {
 function formatInches(inches) {
     if (inches === null || inches === undefined) return '';
     const feet = Math.floor(inches / 12);
-    const remainingInches = Math.round((inches % 12) * 10) / 10; // Round to one decimal place
+    const remainingInches = Math.round((inches % 12) * 10) / 10;
     let output = '';
-    if (feet > 0) {
-        output += `${feet}'`;
-    }
+    if (feet > 0) output += `${feet}'`;
     if (remainingInches > 0) {
-        if (output.length > 0) output += ' '; // Add space if feet were present
+        if (output.length > 0) output += ' ';
         output += `${remainingInches}"`;
     }
-    // Ensure output is never empty, show 0" if inches is 0 or very small
     return output || (inches === 0 ? '0"' : '');
 }
 
 
 function FloorPlanCanvas({
-  image, // The uploaded image object
+  image,
   isSettingScale,
-  onSetScalePoints, // Callback when scale points are clicked
-  scale, // { points: [{x,y}, {x,y}], pixelLength: number }
-  pixelsPerInch, // Calculated scale factor (null until set)
-  furniture, // Array of furniture items { id, x, y, width, height, rotation, name } (dimensions in inches)
-  onFurnitureMove, // Callback when furniture is moved/rotated: (id, { x, y, rotation, width, height })
-  selectedFurnitureId, // ID of the currently selected furniture item
-  onSelectFurniture, // Callback when furniture is selected: (id | null)
+  onSetScalePoints,
+  scale,
+  pixelsPerInch,
+  furniture, // Now includes color/opacity
+  onFurnitureMove,
+  selectedFurnitureId,
+  onSelectFurniture,
 }) {
   const stageRef = useRef(null);
   const layerRef = useRef(null);
   const transformerRef = useRef(null);
-  const containerRef = useRef(null); // Ref for the container div
+  const containerRef = useRef(null);
   const [imageElement, setImageElement] = useState(null);
-  const [stageSize, setStageSize] = useState({ width: 300, height: 300 }); // Initial small size
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 }); // Store original image dimensions
-  const [imageScaleFactor, setImageScaleFactor] = useState(1); // How much the image is scaled to fit
+  const [stageSize, setStageSize] = useState({ width: 300, height: 300 });
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [imageScaleFactor, setImageScaleFactor] = useState(1);
 
   // --- Stage Size Calculation ---
   const updateStageSize = useCallback(() => {
@@ -110,27 +107,22 @@ function FloorPlanCanvas({
     if (transformerRef.current) {
         const transformer = transformerRef.current;
         const stage = transformer.getStage();
-        // Find the GROUP by ID now
         const selectedNode = stage?.findOne('#' + selectedFurnitureId);
-
         if (selectedNode && selectedNode instanceof Konva.Group) {
-            transformer.nodes([selectedNode]); // Attach transformer to the Group
+            transformer.nodes([selectedNode]);
         } else {
-            transformer.nodes([]); // No group selected or found
+            transformer.nodes([]);
         }
         transformer.getLayer()?.batchDraw();
     }
-  }, [selectedFurnitureId]); // Rerun when selection changes
+  }, [selectedFurnitureId]);
 
 
   // --- Event Handlers ---
   const handleStageClick = (e) => {
     const stage = e.target.getStage();
     if (!stage) return;
-
     const target = e.target;
-
-    // If click is on background or image
     if (target === stage || target.hasName('floorplan-image') || target === layerRef.current) {
        if (isSettingScale) {
             const pos = stage.getPointerPosition();
@@ -146,83 +138,58 @@ function FloorPlanCanvas({
                  onSetScalePoints({ x: clampedX, y: clampedY });
             }
        } else {
-           onSelectFurniture(null); // Deselect furniture
+           onSelectFurniture(null);
        }
        return;
     }
-
-    // If click is on a furniture group or its children (Rect, Text)
     let group = target;
-    // Walk up to find the Group, unless we clicked the transformer itself
     while (group && !(group instanceof Konva.Group) && !(group instanceof Konva.Transformer) && group !== stage) {
         group = group.getParent();
     }
-
-    // If we clicked the transformer, do nothing (don't select/deselect)
-    if (group instanceof Konva.Transformer) {
-        return;
-    }
-
-    // If we found a group and are not setting scale, select it
+    if (group instanceof Konva.Transformer) return;
     if (group instanceof Konva.Group && group.id() && !isSettingScale) {
-        onSelectFurniture(group.id()); // Select the group
+        onSelectFurniture(group.id());
     } else {
-        // Otherwise (e.g., clicked something else), deselect
         onSelectFurniture(null);
     }
   };
 
-  // Transform End handler - Operates on the Group
   const handleTransformEnd = (e) => {
-      const group = e.target; // This is the Group node
+      const group = e.target;
       if (!group || !(group instanceof Konva.Group) || !pixelsPerInch) return;
-
-      // Find the Rect inside to get its original dimensions
       const rectNode = group.findOne('Rect');
-      if (!rectNode) return; // Should not happen
+      if (!rectNode) return;
       const originalWidthInches = rectNode.attrs.originalWidthInches;
       const originalHeightInches = rectNode.attrs.originalHeightInches;
-
-      // Reset group scale factor applied during transform
       group.scaleX(1);
       group.scaleY(1);
-
-      // Position comes from the GROUP's final state
       const centerPos = { x: group.x(), y: group.y() };
       const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
       const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
-
-      // Always report the original dimensions back to App state
-      // This prevents rotation from changing the stored width/height
-      onFurnitureMove(group.id(), {
-          x: imageRelativeX,
-          y: imageRelativeY,
-          rotation: group.rotation(), // Use group's final rotation
-          width: originalWidthInches, // Use original width
-          height: originalHeightInches, // Use original height
-      });
-  };
-
-  // Drag End handler - Operates on the Group
-  const handleDragEnd = (e) => {
-      const group = e.target; // The Group node
-      if (!group || !(group instanceof Konva.Group)) return;
-
-      const centerPos = { x: group.x(), y: group.y() };
-      const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
-      const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
-
-      // Find the Rect inside to get original dimensions
-      const rectNode = group.findOne('Rect');
-      const originalWidthInches = rectNode?.attrs?.originalWidthInches;
-      const originalHeightInches = rectNode?.attrs?.originalHeightInches;
-
       onFurnitureMove(group.id(), {
           x: imageRelativeX,
           y: imageRelativeY,
           rotation: group.rotation(),
-          width: originalWidthInches, // Pass original inches width
-          height: originalHeightInches, // Pass original inches height
+          width: originalWidthInches,
+          height: originalHeightInches,
+      });
+  };
+
+  const handleDragEnd = (e) => {
+      const group = e.target;
+      if (!group || !(group instanceof Konva.Group)) return;
+      const centerPos = { x: group.x(), y: group.y() };
+      const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
+      const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
+      const rectNode = group.findOne('Rect');
+      const originalWidthInches = rectNode?.attrs?.originalWidthInches;
+      const originalHeightInches = rectNode?.attrs?.originalHeightInches;
+      onFurnitureMove(group.id(), {
+          x: imageRelativeX,
+          y: imageRelativeY,
+          rotation: group.rotation(),
+          width: originalWidthInches,
+          height: originalHeightInches,
       });
   };
 
@@ -290,59 +257,57 @@ function FloorPlanCanvas({
             const stageCenter = imageToStagePoint({ x: item.x, y: item.y });
             const stageWidth = itemPx.imagePxWidth * imageScaleFactor;
             const stageHeight = itemPx.imagePxHeight * imageScaleFactor;
-            // Dynamic font size based on the smaller dimension of the item on stage
             const baseFontSize = Math.max(8, Math.min(stageWidth, stageHeight) * 0.15);
-            // Scale font size inversely with image scale factor to keep it readable
             const fontSize = baseFontSize / imageScaleFactor;
-            const textPadding = 2 / imageScaleFactor; // Scale padding too
+            const textPadding = 2 / imageScaleFactor;
+            // Use item's color and opacity, provide defaults if missing
+            const itemColor = item.color || '#AAAAAA';
+            const itemOpacity = item.opacity !== undefined ? item.opacity : 0.7;
 
             return (
               <Group
                 key={item.id}
-                id={item.id} // ID on the Group for selection and transformer
+                id={item.id}
                 x={stageCenter.x}
                 y={stageCenter.y}
                 rotation={item.rotation}
                 draggable={!isSettingScale && pixelsPerInch !== null}
                 onDragEnd={handleDragEnd}
-                onTransformEnd={handleTransformEnd} // Transform handler on Group
-                // Group offset is 0,0 - its position (x,y) is the center
+                onTransformEnd={handleTransformEnd}
                 offsetX={0}
                 offsetY={0}
-                // Click/Tap on Group selects it - handled by Stage click delegation
               >
                 <Rect
-                  // No ID needed here
-                  name="furniture-rect" // Add name for potential targeting
-                  x={-stageWidth / 2} // Position relative to group center (0,0)
-                  y={-stageHeight / 2} // Position relative to group center (0,0)
+                  name="furniture-rect"
+                  x={-stageWidth / 2}
+                  y={-stageHeight / 2}
                   width={stageWidth}
                   height={stageHeight}
-                  fill="rgba(100, 150, 255, 0.7)"
-                  stroke={selectedFurnitureId === item.id ? 'red' : 'black'} // Highlight stroke when selected
-                  strokeWidth={selectedFurnitureId === item.id ? 3 / imageScaleFactor : 1.5 / imageScaleFactor} // Thicker stroke when selected
-                  // Store original dimensions for reference
+                  fill={itemColor} // Use item's color
+                  opacity={itemOpacity} // Use item's opacity
+                  stroke={selectedFurnitureId === item.id ? 'red' : 'black'}
+                  strokeWidth={selectedFurnitureId === item.id ? 3 / imageScaleFactor : 1.5 / imageScaleFactor}
                   originalWidthInches={item.width}
                   originalHeightInches={item.height}
-                  // Rect needs listening enabled for transformer to attach correctly via group delegation
                   listening={true}
                 />
                 <Text
-                  text={`${item.name}\n(${formatInches(item.width)} x ${formatInches(item.height)})`}
+                  text={`${item.name}\n(${formatInches(item.width)} x ${formatInches(item.height)})`} // Use potentially updated name
                   fontSize={fontSize}
-                  fill="black"
+                  fill="black" // Keep text black for contrast, or calculate based on fill?
                   align="center"
                   verticalAlign="middle"
-                  x={-stageWidth / 2} // Position relative to group center (0,0)
-                  y={-stageHeight / 2} // Position relative to group center (0,0)
-                  width={stageWidth}   // Text width matches rect width
-                  height={stageHeight}  // Text height matches rect height
+                  x={-stageWidth / 2}
+                  y={-stageHeight / 2}
+                  width={stageWidth}
+                  height={stageHeight}
                   padding={textPadding}
-                  listening={false} // Text doesn't need to be interactive
-                  perfectDrawEnabled={false} // Perf optimization
-                  // Ensure text updates if item dimensions change via transform
-                  width_={item.width} // Add dummy prop to force update on width change
-                  height_={item.height} // Add dummy prop to force update on height change
+                  listening={false}
+                  perfectDrawEnabled={false}
+                  // Add item name to force update when name changes
+                  itemName_={item.name}
+                  width_={item.width}
+                  height_={item.height}
                 />
               </Group>
             );
@@ -352,9 +317,7 @@ function FloorPlanCanvas({
            <Transformer
              ref={transformerRef}
              boundBoxFunc={(oldBox, newBox) => {
-               // Limit resize dimensions if needed (consider minimum size in pixels on stage)
                const minSize = 10;
-               // Use absolute width/height for comparison
                if (Math.abs(newBox.width) < minSize || Math.abs(newBox.height) < minSize) {
                    return oldBox;
                }
@@ -362,32 +325,24 @@ function FloorPlanCanvas({
              }}
              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
              rotateEnabled={true}
-             // Add rotation snap settings
              rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
-             rotationSnapTolerance={10} // Degrees tolerance for snapping
-             // Keep transformer border visually consistent (adjust based on stage scale if zooming is added later)
+             rotationSnapTolerance={10}
              borderStrokeWidth={1.5 / (stageRef.current?.scaleX() ?? 1)}
              anchorStrokeWidth={1 / (stageRef.current?.scaleX() ?? 1)}
              rotateAnchorOffset={20 / (stageRef.current?.scaleX() ?? 1)}
              anchorSize={10 / (stageRef.current?.scaleX() ?? 1)}
              anchorFill="#ddd"
              anchorStroke="black"
-             borderStroke="red" // Make transformer border red for visibility
+             borderStroke="red"
              borderDash={[3, 3]}
-             // Transformer does not need its own transform end handler if group handles it
            />
         </Layer>
       </Stage>
        {/* Status Messages */}
-       {isSettingScale && (
-           <div className="status-message info">
-               Click the first point on the floor plan image for your reference line.
-               {scale.points.length === 1 && " Now click the second point."}
-           </div>
-       )}
-        {!image && ( <div className="status-message info"> Upload a floor plan image using the toolbar to begin. </div> )}
-         {image && pixelsPerInch === null && !isSettingScale && scale.points.length !== 2 && ( <div className="status-message info"> Use the 'Draw Scale Line' button in the toolbar to set the scale. </div> )}
-         {image && pixelsPerInch === null && !isSettingScale && scale.points.length === 2 && ( <div className="status-message info"> Enter the real-world length for the drawn line in the toolbar (e.g., 10', 5'6"). </div> )}
+       {isSettingScale && ( <div className="status-message info"> Click the first point... {scale.points.length === 1 && " Now click the second point."} </div> )}
+       {!image && ( <div className="status-message info"> Upload a floor plan image... </div> )}
+       {image && pixelsPerInch === null && !isSettingScale && scale.points.length !== 2 && ( <div className="status-message info"> Use 'Draw Scale Line'... </div> )}
+       {image && pixelsPerInch === null && !isSettingScale && scale.points.length === 2 && ( <div className="status-message info"> Enter the real-world length... </div> )}
     </div>
   );
 }

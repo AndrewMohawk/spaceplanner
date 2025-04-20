@@ -1,0 +1,102 @@
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.modal-content {
+  background-color: white;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+  max-width: 90%;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.4em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.modal-content .form-group {
+  margin-bottom: 15px;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+  font-size: 0.9em;
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="number"] {
+  width: calc(100% - 16px); /* Account for padding */
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+}
+
+.modal-content input[type="color"] {
+  padding: 0; /* Remove default padding */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  height: 35px; /* Match text input height */
+  width: 50px; /* Fixed width for color picker */
+  vertical-align: middle; /* Align with label/text */
+  cursor: pointer;
+}
+
+.modal-content .color-hex {
+    margin-left: 10px;
+    font-family: monospace;
+    color: #666;
+    font-size: 0.9em;
+    vertical-align: middle;
+}
+
+
+.modal-actions {
+  margin-top: 25px;
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: 10px;
+}
+
+.modal-actions button {
+  padding: 8px 15px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9em;
+  width: auto; /* Allow buttons to size naturally */
+}
+
+.modal-actions .save-button {
+  background-color: #28a745; /* Green */
+  color: white;
+}
+.modal-actions .save-button:hover {
+  background-color: #218838;
+}
+
+.modal-actions button[type="button"] {
+  background-color: #6c757d; /* Grey */
+  color: white;
+}
+.modal-actions button[type="button"]:hover {
+  background-color: #5a6268;
+}
