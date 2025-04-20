@@ -27,17 +27,29 @@ const getDistance = (p1, p2) => {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 };
 
-// Helper function to trigger JSON download
+// Helper function to trigger JSON download using Blob and Object URL
 function downloadJson(data, filename) {
+  let objectUrl = null;
   try {
-    const jsonString = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    objectUrl = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
-    link.href = jsonString;
+    link.href = objectUrl;
     link.download = filename;
+    document.body.appendChild(link); // Required for Firefox
     link.click();
+    document.body.removeChild(link); // Clean up link element
+
   } catch (error) {
       console.error("Error creating download link:", error);
       alert("Failed to initiate download.");
+  } finally {
+      // Revoke the object URL after a short delay to allow the download to start
+      if (objectUrl) {
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 100); // 100ms delay
+      }
   }
 }
 
@@ -245,7 +257,7 @@ function App() {
     };
 
     const filename = `${floorplanImageId.split('|')[0] || 'layout'}.floorplan.json`;
-    downloadJson(layoutData, filename);
+    downloadJson(layoutData, filename); // Use the updated download function
   };
 
   const handleImportLayout = (event) => {
