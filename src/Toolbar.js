@@ -48,7 +48,10 @@ function Toolbar({
   onSetScaleConfirm,
   isSettingScale,
   pixelsPerInch,
-  // onAddFurniture prop is now used differently (see above)
+
+  // Import / Export Handlers
+  onExportLayout,
+  onTriggerImport,
 }) {
   const [customWidth, setCustomWidth] = useState('');
   const [customHeight, setCustomHeight] = useState('');
@@ -149,9 +152,23 @@ function Toolbar({
        <div className="toolbar-section">
            <h3>Actions</h3>
            <button
+               onClick={onExportLayout}
+               disabled={pixelsPerInch === null || isSettingScale} // Disable if no scale or setting scale
+               className="action-button export-button" // Add class for specific styling
+            >
+               Export Layout
+           </button>
+            <button
+               onClick={onTriggerImport}
+               disabled={!onImageUpload || isSettingScale} // Disable if no image loaded or setting scale
+               className="action-button import-button" // Add class for specific styling
+            >
+               Import Layout
+           </button>
+           <button
                onClick={handleDeleteSelected}
                disabled={!selectedFurnitureId || isSettingScale}
-               className="delete-button" // Add class for specific styling
+               className="action-button delete-button" // Add class for specific styling
             >
                Delete Selected Item
            </button>

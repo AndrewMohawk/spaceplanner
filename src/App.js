@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react'; // Added useRef
 import Toolbar from './Toolbar';
 import FloorPlanCanvas from './FloorPlanCanvas';
 import {
@@ -27,6 +27,21 @@ const getDistance = (p1, p2) => {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 };
 
+// Helper function to trigger JSON download
+function downloadJson(data, filename) {
+  try {
+    const jsonString = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+    const link = document.createElement("a");
+    link.href = jsonString;
+    link.download = filename;
+    link.click();
+  } catch (error) {
+      console.error("Error creating download link:", error);
+      alert("Failed to initiate download.");
+  }
+}
+
+
 function App() {
   const [floorplanImage, setFloorplanImage] = useState(null);
   const [floorplanImageId, setFloorplanImageId] = useState(null); // Store identifier (name|size)
@@ -36,22 +51,18 @@ function App() {
   const [pixelsPerInch, setPixelsPerInch] = useState(null);
   const [furniture, setFurniture] = useState([]);
   const [selectedFurnitureId, setSelectedFurnitureId] = useState(null);
-  // State to hold combined default and custom templates
   const [availableFurnitureTemplates, setAvailableFurnitureTemplates] = useState([
       ...DEFAULT_FURNITURE_TEMPLATES
   ]);
-  // State to manage scale confirmation prompt
-  const [pendingScaleConfirmation, setPendingScaleConfirmation] = useState(null); // { identifier: string, scale: number } | null
+  const [pendingScaleConfirmation, setPendingScaleConfirmation] = useState(null);
+  const importFileRef = useRef(null); // Ref for the hidden file input
 
   // Load custom furniture templates on initial mount
   useEffect(() => {
     const loadedCustomTemplates = loadCustomFurnitureTemplates();
-    // Combine defaults with loaded custom templates
-    // Ensure custom templates loaded from storage don't overwrite defaults if IDs clash somehow
-    // (though custom IDs should be unique with timestamps)
     setAvailableFurnitureTemplates([
         ...DEFAULT_FURNITURE_TEMPLATES,
-        ...loadedCustomTemplates.map(t => ({ ...t, isDefault: false })) // Mark as not default
+        ...loadedCustomTemplates.map(t => ({ ...t, isDefault: false }))
     ]);
   }, []);
 
@@ -59,25 +70,17 @@ function App() {
   useEffect(() => {
     if (pendingScaleConfirmation) {
       const { identifier, scale } = pendingScaleConfirmation;
-      const imageName = identifier.split('|')[0] || 'this image'; // Extract name for prompt
-
-      // Use window.confirm for simplicity
+      const imageName = identifier.split('|')[0] || 'this image';
       const useExisting = window.confirm(
         `A scale (${scale.toFixed(2)} px/inch) was previously saved for ${imageName}. Do you want to use it?`
       );
-
       if (useExisting) {
-        console.log(`Using existing scale for ${identifier}: ${scale}`);
         setPixelsPerInch(scale);
-        // Clear scale drawing state if we accept the saved scale
         setScaleState({ points: [], pixelLength: 0 });
         setScaleInput('');
       } else {
-        console.log(`User rejected existing scale for ${identifier}.`);
-        // Proceed without setting scale, user needs to set it manually
         setPixelsPerInch(null);
       }
-      // Clear the pending state regardless of user choice
       setPendingScaleConfirmation(null);
     }
   }, [pendingScaleConfirmation]);
@@ -88,7 +91,7 @@ function App() {
     if (file) {
       const identifier = `${file.name}|${file.size}`;
       setFloorplanImage(file);
-      setFloorplanImageId(identifier); // Store the identifier
+      setFloorplanImageId(identifier);
 
       // Reset state *before* checking for saved scale
       setPixelsPerInch(null);
@@ -97,15 +100,12 @@ function App() {
       setFurniture([]);
       setIsSettingScale(false);
       setSelectedFurnitureId(null);
-      setPendingScaleConfirmation(null); // Clear any previous pending state
+      setPendingScaleConfirmation(null);
 
-      // Check localStorage for existing scale *after* resetting
       const existingScale = getScaleForImage(identifier);
       if (existingScale !== null) {
-        // Don't set scale directly, set pending state to trigger confirmation
         setPendingScaleConfirmation({ identifier, scale: existingScale });
       } else {
-        // No saved scale, proceed as normal (state is already reset)
         console.log(`No saved scale found for ${identifier}.`);
       }
     }
@@ -119,9 +119,9 @@ function App() {
     setIsSettingScale(true);
     setScaleState({ points: [], pixelLength: 0 });
     setScaleInput('');
-    setPixelsPerInch(null); // Clear previous scale if re-drawing
+    setPixelsPerInch(null);
     setSelectedFurnitureId(null);
-    setPendingScaleConfirmation(null); // Clear pending confirmation if user decides to draw
+    setPendingScaleConfirmation(null);
   };
 
   const handleSetScalePoints = (point) => {
@@ -143,13 +143,11 @@ function App() {
     setScaleInput(event.target.value);
   };
 
-  // Receives parsed inches from Toolbar
   const handleSetScaleConfirm = (realLengthInches) => {
-    if (scaleState.pixelLength > 0 && floorplanImageId) { // Ensure we have image ID
+    if (scaleState.pixelLength > 0 && floorplanImageId) {
       const newScale = scaleState.pixelLength / realLengthInches;
       setPixelsPerInch(newScale);
       setScaleInput('');
-      // Save the newly set scale to localStorage
       saveScaleForImage(floorplanImageId, newScale);
       console.log(`Scale set and saved for ${floorplanImageId}: ${newScale.toFixed(2)} px/inch`);
     } else {
@@ -159,7 +157,6 @@ function App() {
     }
   };
 
-  // Adds an instance of a furniture template (default or custom) to the canvas
   const handleAddFurniture = (itemTemplate) => {
     if (pixelsPerInch === null) {
       alert("Please set the scale before adding furniture.");
@@ -167,40 +164,29 @@ function App() {
     }
     const uniqueId = `${itemTemplate.id}-${Date.now()}`;
     const newItem = {
-      ...itemTemplate, // Spread template props (name, width, height)
-      id: uniqueId,     // Unique instance ID
+      ...itemTemplate,
+      id: uniqueId,
       x: (itemTemplate.width / 2) + 50 / (pixelsPerInch || 1),
       y: (itemTemplate.height / 2) + 50 / (pixelsPerInch || 1),
       rotation: 0,
-      // Remove isDefault flag from the instance on the canvas
       isDefault: undefined,
     };
-    // Remove isDefault property explicitly if it exists
     delete newItem.isDefault;
-
     setFurniture(prev => [...prev, newItem]);
     setSelectedFurnitureId(uniqueId);
   };
 
-  // Adds a *new* custom furniture template to the available list and saves it
   const handleAddNewCustomFurnitureTemplate = (newTemplateData) => {
-      // Generate a unique ID for the template itself
       const templateId = `custom-${Date.now()}`;
       const newTemplate = {
-          ...newTemplateData, // Should contain name, width, height
+          ...newTemplateData,
           id: templateId,
-          isDefault: false, // Mark as custom
+          isDefault: false,
       };
-
-      // Update the available templates state
       const updatedTemplates = [...availableFurnitureTemplates, newTemplate];
       setAvailableFurnitureTemplates(updatedTemplates);
-
-      // Save only the custom templates to localStorage
       const customTemplatesToSave = updatedTemplates.filter(t => !t.isDefault);
       saveCustomFurnitureTemplates(customTemplatesToSave);
-
-      // Immediately add an instance of this new template to the canvas
       handleAddFurniture(newTemplate);
   };
 
@@ -209,7 +195,7 @@ function App() {
     setFurniture(prev =>
       prev.map(item =>
         item.id === id
-          ? { ...item, ...newAttrs } // Simply merge new attributes
+          ? { ...item, ...newAttrs }
           : item
       )
     );
@@ -230,11 +216,10 @@ function App() {
   const handleCloneFurniture = useCallback((idToClone) => {
     const itemToClone = furniture.find(item => item.id === idToClone);
     if (itemToClone && pixelsPerInch) {
-      // Find the original template to get base ID prefix
       const templatePrefix = itemToClone.id.substring(0, itemToClone.id.lastIndexOf('-')) || 'clone';
       const uniqueId = `${templatePrefix}-${Date.now()}`;
       const newItem = {
-        ...itemToClone, // Clone all properties including current width/height
+        ...itemToClone,
         id: uniqueId,
         x: itemToClone.x + (20 / pixelsPerInch),
         y: itemToClone.y + (20 / pixelsPerInch),
@@ -244,16 +229,114 @@ function App() {
     }
   }, [furniture, pixelsPerInch]);
 
+  // --- Import / Export ---
+
+  const handleExportLayout = () => {
+    if (!floorplanImageId || pixelsPerInch === null) {
+        alert("Please upload an image and set the scale before exporting.");
+        return;
+    }
+
+    const layoutData = {
+        version: 1, // Add a version number for future compatibility
+        imageId: floorplanImageId,
+        pixelsPerInch: pixelsPerInch,
+        furniture: furniture, // Export the current furniture state
+    };
+
+    const filename = `${floorplanImageId.split('|')[0] || 'layout'}.floorplan.json`;
+    downloadJson(layoutData, filename);
+  };
+
+  const handleImportLayout = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result);
+
+        // Basic validation
+        if (!importedData || typeof importedData !== 'object' || !importedData.imageId || typeof importedData.pixelsPerInch !== 'number' || !Array.isArray(importedData.furniture)) {
+            throw new Error("Invalid file format.");
+        }
+
+        // **Crucial Check:** Compare imported imageId with current imageId
+        if (importedData.imageId !== floorplanImageId) {
+            const currentImageName = floorplanImageId?.split('|')[0] || 'current image';
+            const importedImageName = importedData.imageId.split('|')[0] || 'imported layout';
+            alert(`Import failed: The layout file is for "${importedImageName}", but the currently loaded image is "${currentImageName}". Please load the correct image first.`);
+            // Reset the file input value so the same file can be selected again if needed
+            if (importFileRef.current) {
+                importFileRef.current.value = "";
+            }
+            return;
+        }
+
+        // Restore state from imported data
+        setPixelsPerInch(importedData.pixelsPerInch);
+        setFurniture(importedData.furniture);
+
+        // Reset other potentially conflicting states
+        setSelectedFurnitureId(null);
+        setIsSettingScale(false);
+        setScaleState({ points: [], pixelLength: 0 });
+        setScaleInput('');
+        setPendingScaleConfirmation(null);
+
+        alert("Layout imported successfully!");
+
+      } catch (error) {
+        console.error("Error importing layout:", error);
+        alert(`Failed to import layout: ${error.message}`);
+      } finally {
+          // Reset the file input value so the same file can be selected again
+          if (importFileRef.current) {
+              importFileRef.current.value = "";
+          }
+      }
+    };
+    reader.onerror = (e) => {
+        console.error("Error reading file:", e);
+        alert("Failed to read the selected file.");
+        // Reset the file input value
+        if (importFileRef.current) {
+            importFileRef.current.value = "";
+        }
+    };
+    reader.readAsText(file);
+  };
+
+  // Function to trigger the hidden file input
+  const triggerImportFileSelect = () => {
+      if (importFileRef.current) {
+          importFileRef.current.click();
+      }
+  };
+
 
   return (
     <div className="App">
+      {/* Hidden file input for import */}
+      <input
+        type="file"
+        ref={importFileRef}
+        onChange={handleImportLayout}
+        accept=".json,.floorplan" // Accept json or custom extension
+        style={{ display: 'none' }}
+        aria-hidden="true"
+      />
+
       <h1>Floor Plan Furniture Arranger</h1>
       <div className="main-content">
         <Toolbar
           // Furniture Template Props
-          availableFurnitureTemplates={availableFurnitureTemplates} // Pass combined list
-          onAddNewCustomFurnitureTemplate={handleAddNewCustomFurnitureTemplate} // Handler to add new template type
-          onAddFurniture={handleAddFurniture} // Handler to add instance to canvas
+          availableFurnitureTemplates={availableFurnitureTemplates}
+          onAddNewCustomFurnitureTemplate={handleAddNewCustomFurnitureTemplate}
+          onAddFurniture={handleAddFurniture}
 
           // Placed Item Props
           placedFurniture={furniture}
@@ -271,6 +354,10 @@ function App() {
           onSetScaleConfirm={handleSetScaleConfirm}
           isSettingScale={isSettingScale}
           pixelsPerInch={pixelsPerInch}
+
+          // Import / Export Handlers
+          onExportLayout={handleExportLayout}
+          onTriggerImport={triggerImportFileSelect} // Pass function to trigger file input
         />
         <FloorPlanCanvas
           image={floorplanImage}

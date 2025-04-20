@@ -113,8 +113,28 @@ h1 {
 }
 
 /* Specific button styles */
+.toolbar .action-button { /* General class for action buttons */
+    margin-bottom: 10px; /* Space between action buttons */
+}
+
+.toolbar .export-button {
+    background-color: #17a2b8; /* Teal */
+}
+.toolbar .export-button:hover {
+    background-color: #138496;
+}
+
+.toolbar .import-button {
+    background-color: #ffc107; /* Yellow */
+    color: #212529; /* Dark text for yellow */
+}
+.toolbar .import-button:hover {
+    background-color: #e0a800;
+}
+
+
 .toolbar .delete-button {
-    background-color: #dc3545;
+    background-color: #dc3545; /* Red */
 }
 .toolbar .delete-button:hover {
     background-color: #c82333;
@@ -239,6 +259,7 @@ h1 {
     background-color: #218838;
 }
 
+/* Use specific delete button style for placed items */
 .placed-furniture-list .delete-button {
     background-color: #dc3545;
 }
