@@ -20,6 +20,7 @@ function parseDimensionString(input) {
   input = input.trim();
 
   // Match feet and inches (e.g., 10'6", 5' 8", 12' 0")
+  // Updated regex to handle optional inches quote
   const feetInchesMatch = input.match(/^(\d+(\.\d+)?)\s*'\s*(\d+(\.\d+)?)\s*"?$/);
   if (feetInchesMatch) {
     const feet = parseFloat(feetInchesMatch[1]);
@@ -35,6 +36,7 @@ function parseDimensionString(input) {
   }
 
   // Match only inches (e.g., 72", 36) - allow number without "
+  // Updated regex to handle optional inches quote
   const inchesOnlyMatch = input.match(/^(\d+(\.\d+)?)\s*"?$/);
   if (inchesOnlyMatch) {
     const inches = parseFloat(inchesOnlyMatch[1]);
@@ -135,8 +137,8 @@ function Toolbar({
               value={scaleInput} // Controlled input with string value
               onChange={onScaleInputChange} // Update string value in App state
               onKeyDown={handleScaleInputKeyDown} // Handle Enter key
-              placeholder="e.g., 10' or 5'6\" or 72\"" // Updated placeholder
-              aria-label="Enter scale length (e.g., 10', 5'6\", 72\")"
+              placeholder="e.g., 10' or 5'6\\\" or 72\\\"" // Escaped inner quotes
+              aria-label="Enter scale length (e.g., 10', 5'6\\\", 72\\\")" // Escaped inner quotes
             />
             {/* Removed span with "inches" */}
             <button onClick={handleConfirmScaleValue}>Set</button> {/* Calls internal handler */}
