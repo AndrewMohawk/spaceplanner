@@ -7,14 +7,13 @@ html, body, #root {
 body {
   font-family: sans-serif;
   background-color: #f0f0f0;
-  display: flex; /* Needed for centering App if max-width is used */
-  justify-content: center; /* Center App horizontally */
+  /* Removed display: flex and justify-content: center to allow full width */
 }
 
 .App {
   display: flex;
   flex-direction: column;
-  /* align-items: center; Remove this if we want full width */
+  /* align-items: center; Keep commented out for full width */
   padding: 20px;
   max-width: 100%; /* Use full width */
   width: 100%;
@@ -26,12 +25,14 @@ h1 {
   color: #333;
   text-align: center; /* Center title */
   flex-shrink: 0; /* Prevent title from shrinking */
+  margin-top: 0; /* Remove default margin */
+  margin-bottom: 20px; /* Add some space below title */
 }
 
 .main-content {
   display: flex;
   width: 100%;
-  margin-top: 20px;
+  /* margin-top: 20px; Removed as h1 margin handles spacing */
   gap: 20px; /* Space between toolbar and canvas */
   align-items: stretch; /* Stretch items to fill height */
   flex-grow: 1; /* Allow main content to fill remaining vertical space */
@@ -49,6 +50,7 @@ h1 {
   flex-direction: column;
   gap: 20px; /* Space between sections in the toolbar */
   overflow-y: auto; /* Allow toolbar to scroll if content overflows */
+  /* Adjust max-height based on viewport height minus padding and title space */
   max-height: calc(100vh - 100px); /* Example max-height, adjust as needed */
 }
 
@@ -181,7 +183,7 @@ h1 {
 /* Style for the Konva stage itself */
 .konvajs-content {
   /* Canvas element will be sized by Konva Stage */
-  border: 1px solid #ccc; /* Visual border for the canvas */
+  /* border: 1px solid #ccc; Optional: remove border if container provides enough visual separation */
 }
 
 .status-message {
@@ -215,3 +217,10 @@ h1 {
 /* Style for the scale line (visual aid) */
 /* Actual line style is set in FloorPlanCanvas.js */
 /* Example: .scale-line { stroke: cyan; stroke-width: 5px; } */
+
+.scale-display { /* Style for the displayed scale text */
+    font-size: 0.9em;
+    color: #333;
+    margin-top: 10px;
+    margin-bottom: 0;
+}
