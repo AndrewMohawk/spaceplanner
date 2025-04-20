@@ -51,12 +51,56 @@ h1 {
   flex-shrink: 0; /* Prevent toolbar from shrinking */
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Space between sections in the toolbar */
+  gap: 15px; /* Reduced gap between sections */
   overflow-y: auto; /* Allow toolbar to scroll if content overflows */
   /* Adjust max-height based on viewport height minus padding and title space */
   max-height: calc(100vh - 100px); /* Example max-height, adjust as needed */
 }
 
+/* --- Top Action Bar --- */
+.toolbar-top-actions {
+    display: flex;
+    justify-content: space-around; /* Distribute icons evenly */
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px; /* Space below action bar */
+}
+
+.icon-action-button {
+    background: none;
+    border: none;
+    font-size: 1.5em; /* Adjust icon size */
+    cursor: pointer;
+    padding: 5px;
+    color: #555;
+    transition: color 0.2s, transform 0.2s;
+    width: auto; /* Override default button width */
+}
+
+.icon-action-button:hover {
+    color: #000;
+    transform: scale(1.1);
+}
+
+.icon-action-button:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Specific icon button colors (optional) */
+.icon-action-button.share-button { color: #fd7e14; }
+.icon-action-button.export-button { color: #17a2b8; }
+.icon-action-button.import-button { color: #ffc107; }
+.icon-action-button.delete-button { color: #dc3545; }
+
+.icon-action-button.share-button:hover { color: #e66a00; }
+.icon-action-button.export-button:hover { color: #138496; }
+.icon-action-button.import-button:hover { color: #e0a800; }
+.icon-action-button.delete-button:hover { color: #c82333; }
+
+
+/* --- Toolbar Sections --- */
 .toolbar-section {
   border-bottom: 1px solid #eee;
   padding-bottom: 15px;
@@ -71,7 +115,19 @@ h1 {
   margin-bottom: 10px;
   color: #555;
   font-size: 1em;
+  display: flex; /* For alignment with collapse icon */
+  justify-content: space-between; /* Push icon to the right */
+  align-items: center;
 }
+
+/* Collapsible Header Styles */
+.collapsible-header.collapsible {
+    cursor: pointer;
+}
+.collapsible-header.collapsible:hover {
+    color: #007bff;
+}
+
 
 .toolbar p { /* Reduce margin on paragraphs within toolbar */
     margin-top: 5px;
@@ -121,43 +177,11 @@ h1 {
   cursor: not-allowed;
 }
 
-/* Specific button styles */
-.toolbar .action-button { /* General class for action buttons */
-    margin-bottom: 10px; /* Space between action buttons */
-}
-
-.toolbar .share-button {
-    background-color: #fd7e14; /* Orange */
-}
-.toolbar .share-button:hover {
-    background-color: #e66a00;
-}
-
-.toolbar .export-button {
-    background-color: #17a2b8; /* Teal */
-}
-.toolbar .export-button:hover {
-    background-color: #138496;
-}
-
-.toolbar .import-button {
-    background-color: #ffc107; /* Yellow */
-    color: #212529; /* Dark text for yellow */
-}
-.toolbar .import-button:hover {
-    background-color: #e0a800;
-}
-
-
-.toolbar .delete-button {
-    background-color: #dc3545; /* Red */
-}
-.toolbar .delete-button:hover {
-    background-color: #c82333;
-}
-.toolbar .delete-button:disabled {
-    background-color: #ccc;
-}
+/* Remove specific button styles for actions that moved */
+/* .toolbar .action-button { ... } */
+/* .toolbar .export-button { ... } */
+/* .toolbar .import-button { ... } */
+/* .toolbar .delete-button { ... } */
 
 
 .scale-input-group {

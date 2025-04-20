@@ -437,6 +437,13 @@ function App() {
       if (importFileRef.current) importFileRef.current.click();
   };
 
+  // --- Share ---
+  // Placeholder for share functionality (requires backend)
+  const handleShareLayout = () => {
+      alert("Sharing functionality requires a backend server and is not implemented in this version.");
+      // In a real implementation, this would call the backend API
+  };
+
   // Find the item being edited for the modal
   const itemToEdit = furniture.find(item => item.id === editingItemId);
 
@@ -459,9 +466,11 @@ function App() {
           onSelectFurniture={handleSelectFurniture}
           onDeleteFurniture={handleDeleteFurniture}
           onCloneFurniture={handleCloneFurniture}
-          onOpenEditModal={handleOpenEditModal} // Pass handler to open modal
+          onOpenEditModal={handleOpenEditModal}
 
           // Image & Scale Props
+          hasImage={!!floorplanImage} // Pass boolean indicating if image is loaded
+          isScaleSet={pixelsPerInch !== null} // Pass boolean indicating if scale is set
           onImageUpload={handleImageUpload}
           onSetScaleMode={handleSetScaleMode}
           scale={scaleState}
@@ -471,9 +480,12 @@ function App() {
           isSettingScale={isSettingScale}
           pixelsPerInch={pixelsPerInch}
 
-          // Import / Export Handlers
+          // Import / Export / Share Handlers
           onExportLayout={handleExportLayout}
           onTriggerImport={triggerImportFileSelect}
+          onShareLayout={handleShareLayout} // Pass share handler
+          // Determine if share should be enabled (requires image File and scale)
+          canShare={floorplanImage instanceof File && pixelsPerInch !== null}
         />
         <FloorPlanCanvas
           image={floorplanImage}
@@ -481,7 +493,7 @@ function App() {
           onSetScalePoints={handleSetScalePoints}
           scale={scaleState}
           pixelsPerInch={pixelsPerInch}
-          furniture={furniture} // Pass furniture with color/opacity
+          furniture={furniture}
           onFurnitureMove={handleFurnitureMove}
           selectedFurnitureId={selectedFurnitureId}
           onSelectFurniture={handleSelectFurniture}
