@@ -177,44 +177,29 @@ function FloorPlanCanvas({
       const group = e.target; // This is the Group node
       if (!group || !(group instanceof Konva.Group) || !pixelsPerInch) return;
 
-      const scaleX = group.scaleX();
-      const scaleY = group.scaleY();
-
-      // Find the Rect inside to get its base size (before scaling)
+      // Find the Rect inside to get its original dimensions
       const rectNode = group.findOne('Rect');
       if (!rectNode) return; // Should not happen
+      const originalWidthInches = rectNode.attrs.originalWidthInches;
+      const originalHeightInches = rectNode.attrs.originalHeightInches;
 
-      // Original stage dimensions of the rect (before this transform)
-      const originalStageWidth = rectNode.width();
-      const originalStageHeight = rectNode.height();
-
-      // Calculate new dimensions based on group's scale factor
-      const newStageWidthPx = originalStageWidth * scaleX;
-      const newStageHeightPx = originalStageHeight * scaleY;
-
-      // Convert stage pixel dimensions back to original image pixel dimensions
-      const newImagePxWidth = newStageWidthPx / imageScaleFactor;
-      const newImagePxHeight = newStageHeightPx / imageScaleFactor;
-
-      // Convert image pixel dimensions back to inches
-      const newWidthInches = newImagePxWidth / pixelsPerInch;
-      const newHeightInches = newImagePxHeight / pixelsPerInch;
-
-      // Reset group scale AFTER calculating new dimensions
+      // Reset group scale factor applied during transform
       group.scaleX(1);
       group.scaleY(1);
 
-      // Position comes from the GROUP
+      // Position comes from the GROUP's final state
       const centerPos = { x: group.x(), y: group.y() };
       const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
       const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
 
-      onFurnitureMove(group.id(), { // Use group's ID
+      // Always report the original dimensions back to App state
+      // This prevents rotation from changing the stored width/height
+      onFurnitureMove(group.id(), {
           x: imageRelativeX,
           y: imageRelativeY,
-          rotation: group.rotation(), // Use group's rotation
-          width: newWidthInches,
-          height: newHeightInches,
+          rotation: group.rotation(), // Use group's final rotation
+          width: originalWidthInches, // Use original width
+          height: originalHeightInches, // Use original height
       });
   };
 
@@ -227,7 +212,7 @@ function FloorPlanCanvas({
       const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
       const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
 
-      // Find the Rect inside to get original dimensions (could also store on group attrs)
+      // Find the Rect inside to get original dimensions
       const rectNode = group.findOne('Rect');
       const originalWidthInches = rectNode?.attrs?.originalWidthInches;
       const originalHeightInches = rectNode?.attrs?.originalHeightInches;
@@ -320,12 +305,11 @@ function FloorPlanCanvas({
                 rotation={item.rotation}
                 draggable={!isSettingScale && pixelsPerInch !== null}
                 onDragEnd={handleDragEnd}
-                onTransformEnd={handleTransformEnd} // Move transform handler to Group
+                onTransformEnd={handleTransformEnd} // Transform handler on Group
                 // Group offset is 0,0 - its position (x,y) is the center
                 offsetX={0}
                 offsetY={0}
-                // Click/Tap on Group selects it
-                // onClick/onTap handled by Stage click delegation logic now
+                // Click/Tap on Group selects it - handled by Stage click delegation
               >
                 <Rect
                   // No ID needed here
@@ -337,7 +321,7 @@ function FloorPlanCanvas({
                   fill="rgba(100, 150, 255, 0.7)"
                   stroke={selectedFurnitureId === item.id ? 'red' : 'black'} // Highlight stroke when selected
                   strokeWidth={selectedFurnitureId === item.id ? 3 / imageScaleFactor : 1.5 / imageScaleFactor} // Thicker stroke when selected
-                  // Store original dimensions for reference if needed
+                  // Store original dimensions for reference
                   originalWidthInches={item.width}
                   originalHeightInches={item.height}
                   // Rect needs listening enabled for transformer to attach correctly via group delegation
@@ -378,6 +362,9 @@ function FloorPlanCanvas({
              }}
              enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
              rotateEnabled={true}
+             // Add rotation snap settings
+             rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+             rotationSnapTolerance={10} // Degrees tolerance for snapping
              // Keep transformer border visually consistent (adjust based on stage scale if zooming is added later)
              borderStrokeWidth={1.5 / (stageRef.current?.scaleX() ?? 1)}
              anchorStrokeWidth={1 / (stageRef.current?.scaleX() ?? 1)}
@@ -388,7 +375,6 @@ function FloorPlanCanvas({
              borderStroke="red" // Make transformer border red for visibility
              borderDash={[3, 3]}
              // Transformer does not need its own transform end handler if group handles it
-             // onTransformEnd={handleTransformEnd} // REMOVED from here
            />
         </Layer>
       </Stage>
