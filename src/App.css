@@ -70,6 +70,12 @@ h1 {
   font-size: 1em;
 }
 
+.toolbar p { /* Reduce margin on paragraphs within toolbar */
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-size: 0.95em;
+}
+
 .toolbar label,
 .toolbar button,
 .toolbar input {
@@ -198,6 +204,34 @@ h1 {
     margin-bottom: 0;
     flex-shrink: 0; /* Prevent button from shrinking */
 }
+
+/* Header for custom items list */
+.custom-items-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px; /* Space below header */
+}
+
+.custom-items-header p {
+    margin: 0; /* Remove margin from paragraph */
+    font-weight: bold; /* Make heading bold */
+}
+
+.custom-items-header .add-all-button {
+    width: auto; /* Don't force full width */
+    padding: 4px 8px; /* Smaller padding */
+    font-size: 0.8em; /* Smaller font */
+    margin-bottom: 0; /* Remove default button margin */
+    background-color: #6c757d; /* Grey */
+}
+.custom-items-header .add-all-button:hover {
+    background-color: #5a6268;
+}
+.custom-items-header .add-all-button:disabled {
+    background-color: #ccc;
+}
+
 
 /* Styles for the Placed Items list */
 .placed-furniture-list {

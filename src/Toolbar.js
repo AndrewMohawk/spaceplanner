@@ -109,6 +109,17 @@ function Toolbar({
       }
   };
 
+  // Handler to add all custom items
+  const handleAddAllCustom = () => {
+      if (pixelsPerInch === null) {
+          alert("Please set the scale before adding items.");
+          return;
+      }
+      customTemplates.forEach(item => {
+          onAddFurniture(item);
+      });
+  };
+
   return (
     <div className="toolbar">
       {/* --- Upload Section --- */}
@@ -200,27 +211,7 @@ function Toolbar({
 
         <hr />
 
-        {/* Custom Templates List */}
-        <p>Custom Items:</p>
-        {customTemplates.length > 0 ? (
-            <ul className="furniture-list">
-            {customTemplates.map((item) => (
-                <li key={item.id}>
-                <span>{item.name} ({item.width}"x{item.height}")</span>
-                {/* TODO: Add delete/edit buttons for custom templates later? */}
-                <button onClick={() => onAddFurniture(item)} disabled={pixelsPerInch === null}>
-                    Add
-                </button>
-                </li>
-            ))}
-            </ul>
-        ) : (
-             <p>No custom items saved yet.</p>
-        )}
-
-
-        <hr />
-        {/* Input for NEW Custom Item */}
+        {/* Input for NEW Custom Item - MOVED HERE */}
         <p>Create New Custom Item:</p>
          <input
           type="text"
@@ -253,6 +244,37 @@ function Toolbar({
         <button onClick={handleAddCustomFurnitureTemplate} disabled={pixelsPerInch === null}>
           Save & Add Custom Item
         </button>
+
+        <hr />
+
+        {/* Custom Templates List */}
+        <div className="custom-items-header">
+            <p>Custom Items:</p>
+            <button
+                onClick={handleAddAllCustom}
+                disabled={pixelsPerInch === null || customTemplates.length === 0}
+                className="add-all-button"
+                title="Add one of each custom item to the canvas"
+            >
+                Add All
+            </button>
+        </div>
+        {customTemplates.length > 0 ? (
+            <ul className="furniture-list">
+            {customTemplates.map((item) => (
+                <li key={item.id}>
+                <span>{item.name} ({item.width}"x{item.height}")</span>
+                {/* TODO: Add delete/edit buttons for custom templates later? */}
+                <button onClick={() => onAddFurniture(item)} disabled={pixelsPerInch === null}>
+                    Add
+                </button>
+                </li>
+            ))}
+            </ul>
+        ) : (
+             <p>No custom items saved yet.</p>
+        )}
+
       </div>
 
        {/* --- Placed Items Section --- */}
