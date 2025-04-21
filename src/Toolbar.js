@@ -139,19 +139,6 @@ function Toolbar({
       });
   };
 
-  // Toggle handlers for collapsible sections
-  const toggleUploadSection = () => {
-      if (hasImage) { // Only allow toggling if image is loaded
-          setIsUploadCollapsed(!isUploadCollapsed);
-      }
-  };
-
-  const toggleScaleSection = () => {
-      if (isScaleSet) { // Only allow toggling if scale is set
-          setIsScaleCollapsed(!isScaleCollapsed);
-      }
-  };
-
 
   return (
     <div className="toolbar">
