@@ -114,6 +114,10 @@ function Toolbar({
         width: width,
         height: height,
       });
+      // Clear inputs after successful addition
+      setCustomName('Custom Item');
+      setCustomWidth('');
+      setCustomHeight('');
     } else {
       alert('Please enter a valid name, positive width, and positive height for the custom item.');
     }
