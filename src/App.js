@@ -71,6 +71,8 @@ function App() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   // State for Copy/Paste
   const [copiedItemData, setCopiedItemData] = useState(null);
+  // State for Share button enablement
+  const canShare = floorplanImage instanceof File && pixelsPerInch !== null;
 
   // Load custom furniture templates on initial mount
   useEffect(() => {

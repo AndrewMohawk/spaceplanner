@@ -78,6 +78,21 @@ function Toolbar({
       setIsScaleCollapsed(isScaleSet);
   }, [isScaleSet]);
 
+  // State for collapsible sections
+  const [isUploadCollapsed, setIsUploadCollapsed] = useState(hasImage);
+  const [isScaleCollapsed, setIsScaleCollapsed] = useState(isScaleSet);
+
+  // Update collapsed state when props change (e.g., image uploaded or scale set)
+  useEffect(() => {
+      // Collapse upload section only if an image is present
+      setIsUploadCollapsed(hasImage);
+  }, [hasImage]);
+
+  useEffect(() => {
+      // Collapse scale section only if the scale is actually set
+      setIsScaleCollapsed(isScaleSet);
+  }, [isScaleSet]);
+
 
   // Separate default and custom templates for display
   const defaultTemplates = availableFurnitureTemplates.filter(t => t.isDefault);
