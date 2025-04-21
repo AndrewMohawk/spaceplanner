@@ -177,11 +177,8 @@ h1 {
   cursor: not-allowed;
 }
 
-/* Remove specific button styles for actions that moved */
-/* .toolbar .action-button { ... } */
-/* .toolbar .export-button { ... } */
-/* .toolbar .import-button { ... } */
-/* .toolbar .delete-button { ... } */
+/* Remove specific button styles for actions that moved - These rules are now handled by .icon-action-button */
+/* No need for these anymore */
 
 
 .scale-input-group {
