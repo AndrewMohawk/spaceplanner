@@ -69,10 +69,12 @@ function Toolbar({
 
   // Update collapsed state when props change (e.g., image uploaded or scale set)
   useEffect(() => {
+      // Collapse upload section only if an image is present
       setIsUploadCollapsed(hasImage);
   }, [hasImage]);
 
   useEffect(() => {
+      // Collapse scale section only if the scale is actually set
       setIsScaleCollapsed(isScaleSet);
   }, [isScaleSet]);
 
@@ -178,13 +180,13 @@ function Toolbar({
                 title="Import Layout from File"
                 aria-label="Import Layout"
             >
-                 L {/* Import Icon */}
+                 ↑ {/* Import Icon */}
             </button>
             <button
                 onClick={handleDeleteSelected}
                 disabled={!selectedFurnitureId || isSettingScale}
                 className="icon-action-button delete-button"
-                title="Delete Selected Item"
+                title="Delete Selected Item (Del/Backspace)"
                 aria-label="Delete Selected Item"
             >
                 🗑️ {/* Delete Icon */}
@@ -198,6 +200,7 @@ function Toolbar({
             className={`collapsible-header ${hasImage ? 'collapsible' : ''}`}
             onClick={toggleUploadSection}
             aria-expanded={!isUploadCollapsed}
+            title={hasImage ? (isUploadCollapsed ? 'Expand Upload Section' : 'Collapse Upload Section') : ''}
         >
             1. Upload Floor Plan {hasImage && (isUploadCollapsed ? '►' : '▼')}
         </h3>
@@ -220,6 +223,7 @@ function Toolbar({
             className={`collapsible-header ${isScaleSet ? 'collapsible' : ''}`}
             onClick={toggleScaleSection}
             aria-expanded={!isScaleCollapsed}
+            title={isScaleSet ? (isScaleCollapsed ? 'Expand Scale Section' : 'Collapse Scale Section') : ''}
         >
             2. Set Scale {isScaleSet && (isScaleCollapsed ? '►' : '▼')}
         </h3>
@@ -242,12 +246,13 @@ function Toolbar({
                     <button onClick={handleConfirmScaleValue}>Set</button>
                 </div>
                 )}
+                {/* Show scale display here only if scale is set but section is open */}
                 {pixelsPerInch !== null && (
                     <p className="scale-display">Scale: 1 inch ≈ {pixelsPerInch.toFixed(2)} pixels</p>
                 )}
             </>
         )}
-         {/* Always show the scale display if it's set, even when collapsed */}
+         {/* Always show the scale display if it's set AND collapsed */}
          {isScaleSet && isScaleCollapsed && pixelsPerInch !== null && (
              <p className="scale-display">Scale: 1 inch ≈ {pixelsPerInch.toFixed(2)} pixels</p>
          )}
