@@ -197,15 +197,6 @@ function Toolbar({
             >
                  ↑ {/* Import Icon */}
             </button>
-            <button
-                onClick={handleDeleteSelected}
-                disabled={!selectedFurnitureId || isSettingScale}
-                className="icon-action-button delete-button"
-                title="Delete Selected Item (Del/Backspace)"
-                aria-label="Delete Selected Item"
-            >
-                🗑️ {/* Delete Icon */}
-            </button>
        </div>
 
 
