@@ -63,36 +63,13 @@ function Toolbar({
   const [customName, setCustomName] = useState('Custom Item');
   const scaleInputRef = useRef(null);
 
-  // State for collapsible sections
-  const [isUploadCollapsed, setIsUploadCollapsed] = useState(hasImage);
-  const [isScaleCollapsed, setIsScaleCollapsed] = useState(isScaleSet);
+  // State to control visibility of Upload/Scale sections
+  const [showSetupUI, setShowSetupUI] = useState(!isScaleSet);
 
-  // Update collapsed state when props change (e.g., image uploaded or scale set)
+  // Update setup UI visibility when scale is set/unset
   useEffect(() => {
-      // Collapse upload section only if an image is present
-      setIsUploadCollapsed(hasImage);
-  }, [hasImage]);
-
-  useEffect(() => {
-      // Collapse scale section only if the scale is actually set
-      setIsScaleCollapsed(isScaleSet);
+      setShowSetupUI(!isScaleSet);
   }, [isScaleSet]);
-
-  // State for collapsible sections
-  const [isUploadCollapsed, setIsUploadCollapsed] = useState(hasImage);
-  const [isScaleCollapsed, setIsScaleCollapsed] = useState(isScaleSet);
-
-  // Update collapsed state when props change (e.g., image uploaded or scale set)
-  useEffect(() => {
-      // Collapse upload section only if an image is present
-      setIsUploadCollapsed(hasImage);
-  }, [hasImage]);
-
-  useEffect(() => {
-      // Collapse scale section only if the scale is actually set
-      setIsScaleCollapsed(isScaleSet);
-  }, [isScaleSet]);
-
 
   // Separate default and custom templates for display
   const defaultTemplates = availableFurnitureTemplates.filter(t => t.isDefault);
@@ -203,21 +180,14 @@ function Toolbar({
             </button>
        </div>
 
-
-      {/* --- Upload Section (Collapsible) --- */}
-      <div className="toolbar-section">
-        <h3
-            className={`collapsible-header ${hasImage ? 'collapsible' : ''}`}
-            onClick={toggleUploadSection}
-            aria-expanded={!isUploadCollapsed}
-            title={hasImage ? (isUploadCollapsed ? 'Expand Upload Section' : 'Collapse Upload Section') : ''}
-        >
-            1. Upload Floor Plan {hasImage && (isUploadCollapsed ? '►' : '▼')}
-        </h3>
-        {(!hasImage || !isUploadCollapsed) && ( // Show if no image OR if not collapsed
-            <>
-                <label htmlFor="floorplan-upload">Select Image:</label>
-                <input
+       {/* --- Conditional Setup UI --- */}
+       {showSetupUI && (
+           <>
+                {/* --- Upload Section --- */}
+                <div className="toolbar-section">
+                    <h3>1. Upload Floor Plan</h3>
+                    <label htmlFor="floorplan-upload">Select Image:</label>
+                    <input
                 type="file"
                 id="floorplan-upload"
                 accept="image/*"
@@ -227,20 +197,13 @@ function Toolbar({
         )}
       </div>
 
-      {/* --- Scale Section (Collapsible) --- */}
+      {/* --- Scale Section --- */}
       <div className="toolbar-section">
-         <h3
-            className={`collapsible-header ${isScaleSet ? 'collapsible' : ''}`}
-            onClick={toggleScaleSection}
-            aria-expanded={!isScaleCollapsed}
-            title={isScaleSet ? (isScaleCollapsed ? 'Expand Scale Section' : 'Collapse Scale Section') : ''}
-        >
-            2. Set Scale {isScaleSet && (isScaleCollapsed ? '►' : '▼')}
-        </h3>
-        {(!isScaleSet || !isScaleCollapsed) && ( // Show if scale not set OR if not collapsed
-            <>
-                <button onClick={onSetScaleMode} disabled={isSettingScale || !hasImage}>
-                {isSettingScale ? 'Click two points on image...' : 'Draw Scale Line'}
+         <h3>2. Set Scale</h3>
+         {/* Content is now always shown if showSetupUI is true */}
+         <>
+             <button onClick={onSetScaleMode} disabled={isSettingScale || !hasImage}>
+             {isSettingScale ? 'Click two points on image...' : 'Draw Scale Line'}
                 </button>
                 {scale.points.length === 2 && !isSettingScale && pixelsPerInch === null && (
                 <div className="scale-input-group">
@@ -260,13 +223,28 @@ function Toolbar({
                 {pixelsPerInch !== null && (
                     <p className="scale-display">Scale: 1 inch ≈ {pixelsPerInch.toFixed(2)} pixels</p>
                 )}
-            </>
-        )}
-         {/* Always show the scale display if it's set AND collapsed */}
-         {isScaleSet && isScaleCollapsed && pixelsPerInch !== null && (
-             <p className="scale-display">Scale: 1 inch ≈ {pixelsPerInch.toFixed(2)} pixels</p>
-         )}
-      </div>
+                    )}
+                    {/* Show scale display within the scale section when visible */}
+                    {pixelsPerInch !== null && (
+                        <p className="scale-display">Scale: 1 inch ≈ {pixelsPerInch.toFixed(2)} pixels</p>
+                    )}
+                </div>
+           </>
+       )}
+
+       {/* --- Button to Re-Show Setup UI --- */}
+       {!showSetupUI && isScaleSet && (
+            <div className="toolbar-section">
+                <h3>Floor Plan Setup</h3>
+                <button onClick={handleRebuildScale}>
+                    Re-Upload or Re-Set Scale
+                </button>
+                 {/* Display scale here when setup is hidden */}
+                 {pixelsPerInch !== null && (
+                     <p className="scale-display">Scale: 1 inch ≈ {pixelsPerInch.toFixed(2)} pixels</p>
+                 )}
+            </div>
+       )}
 
       {/* --- Add Furniture Section --- */}
       <div className="toolbar-section">
