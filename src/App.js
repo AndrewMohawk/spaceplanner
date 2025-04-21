@@ -53,7 +53,7 @@ function downloadJson(data, filename) {
 
 
 function App() {
-  const [floorplanImage, setFloorplanImage] = useState(null);
+  const [floorplanImage, setFloorplanImage] = useState(null); // Can be File or URL string
   const [floorplanImageId, setFloorplanImageId] = useState(null);
   const [isSettingScale, setIsSettingScale] = useState(false);
   const [scaleState, setScaleState] = useState({ points: [], pixelLength: 0 });
@@ -202,7 +202,7 @@ function App() {
     const file = event.target.files[0];
     if (file) {
       const identifier = `${file.name}|${file.size}`;
-      setFloorplanImage(file);
+      setFloorplanImage(file); // Store the File object
       setFloorplanImageId(identifier);
       setPixelsPerInch(null);
       setScaleState({ points: [], pixelLength: 0 });
@@ -415,6 +415,8 @@ function App() {
         if (!floorplanImageId) {
             setFloorplanImageId(importedData.imageId);
             // We still don't have the image File/URL here for the canvas!
+            // Set floorplanImage to null or a placeholder to avoid errors if canvas expects it
+            setFloorplanImage(null);
             alert("Layout data imported, but you may need to manually upload the corresponding floor plan image.");
         }
         setSelectedFurnitureId(null); setIsSettingScale(false); setScaleState({ points: [], pixelLength: 0 });
@@ -442,6 +444,9 @@ function App() {
   const handleShareLayout = () => {
       alert("Sharing functionality requires a backend server and is not implemented in this version.");
       // In a real implementation, this would call the backend API
+      // It would likely need the image file (floorplanImage) and the layout data (furniture, pixelsPerInch, imageId)
+      // const layoutData = { imageId: floorplanImageId, pixelsPerInch, furniture };
+      // api.shareLayout(floorplanImage, layoutData).then(shareUrl => alert(`Shared at: ${shareUrl}`));
   };
 
   // Find the item being edited for the modal
@@ -488,7 +493,7 @@ function App() {
           canShare={floorplanImage instanceof File && pixelsPerInch !== null}
         />
         <FloorPlanCanvas
-          image={floorplanImage}
+          image={floorplanImage} // Pass the File or null
           isSettingScale={isSettingScale}
           onSetScalePoints={handleSetScalePoints}
           scale={scaleState}
