@@ -121,6 +121,13 @@ function Toolbar({
       }
   };
 
+  // Handler for the "Re-Upload or Re-Set Scale" button
+  const handleRebuildScale = () => {
+      setShowSetupUI(true);
+      // Note: This just reveals the UI. Resetting scale state itself
+      // might need to happen in App.js if desired.
+  };
+
   // Handler to add all custom items
   const handleAddAllCustom = () => {
       if (pixelsPerInch === null) {
