@@ -1,5 +1,8 @@
 /* Import Modal styles */
 @import url('./EditFurnitureModal.css');
+@import url('./ShareModal.css');
+@import url('./Toolbar.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 html, body, #root {
   height: 100%; /* Ensure root elements take full height */
@@ -8,8 +11,10 @@ html, body, #root {
 }
 
 body {
-  font-family: sans-serif;
-  background-color: #f0f0f0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.5;
   /* Removed display: flex and justify-content: center to allow full width */
 }
 
@@ -17,174 +22,380 @@ body {
   display: flex;
   flex-direction: column;
   /* align-items: center; Keep commented out for full width */
-  padding: 20px;
-  max-width: 100%; /* Use full width */
+  padding: 6px; /* Reduced from 12px */
+  max-width: 100%;
   width: 100%;
   min-height: 100vh; /* Ensure App takes at least full viewport height */
   box-sizing: border-box; /* Include padding in width/height calculation */
 }
 
+header {
+  text-align: center;
+  margin-bottom: 28px;
+  padding: 16px 0;
+}
+
 h1 {
-  color: #333;
-  text-align: center; /* Center title */
-  flex-shrink: 0; /* Prevent title from shrinking */
-  margin-top: 0; /* Remove default margin */
-  margin-bottom: 20px; /* Add some space below title */
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 32px;
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  position: relative;
+  letter-spacing: -0.5px;
+}
+
+.title-highlight {
+  color: #3182ce;
+  position: relative;
+  font-weight: 700;
+}
+
+.title-highlight::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: #3182ce;
+  border-radius: 2px;
 }
 
 .main-content {
   display: flex;
   width: 100%;
-  /* margin-top: 20px; Removed as h1 margin handles spacing */
-  gap: 20px; /* Space between toolbar and canvas */
-  align-items: stretch; /* Stretch items to fill height */
-  flex-grow: 1; /* Allow main content to fill remaining vertical space */
-  overflow: hidden; /* Prevent content overflow issues */
+  gap: 16px; /* Reduced space between toolbar and canvas */
+  align-items: stretch;
+  flex-grow: 1;
+  overflow: hidden;
+  padding: 0; /* Remove padding from main content */
+  padding-bottom: 40px;
 }
 
 .toolbar {
   background-color: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 280px; /* Slightly wider toolbar */
-  flex-shrink: 0; /* Prevent toolbar from shrinking */
+  padding: 10px 10px 10px 8px; /* Increased padding */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 300px; /* Increased from 240px */
+  min-width: 300px; /* Increased from 240px */
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Reduced gap between sections */
-  overflow-y: auto; /* Allow toolbar to scroll if content overflows */
-  /* Adjust max-height based on viewport height minus padding and title space */
-  max-height: calc(100vh - 100px); /* Example max-height, adjust as needed */
+  gap: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 60px);
+}
+
+/* Toolbar Header */
+.toolbar-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #3182ce;
+  margin: 0 0 12px 0;
+  padding: 0 0 8px 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.toolbar-header h2 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
 }
 
 /* --- Top Action Bar --- */
 .toolbar-top-actions {
-    display: flex;
-    justify-content: space-around; /* Distribute icons evenly */
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 10px; /* Space below action bar */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px; /* Increased from 4px */
+  margin-bottom: 12px; /* Increased from 8px */
+  width: 100%; /* Make sure it takes full width */
+  margin-top: 5px; /* Add a small margin top for spacing from logo */
+}
+
+.toolbar-top-actions .icon-action-button {
+  padding: 8px 6px; /* Increased from 5px 4px */
+  font-size: 12px; /* Increased from 10px */
+  white-space: nowrap;
+  height: auto; /* Remove fixed height */
+  min-height: 36px; /* Set minimum height */
 }
 
 .icon-action-button {
-    background: none;
-    border: none;
-    font-size: 1.5em; /* Adjust icon size */
-    cursor: pointer;
-    padding: 5px;
-    color: #555;
-    transition: color 0.2s, transform 0.2s;
-    width: auto; /* Override default button width */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; /* Increased from 4px */
+  padding: 8px 10px; /* Increased from 5px 8px */
+  border: none;
+  border-radius: 4px;
+  background-color: #edf2f7;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: #4a5568;
+  width: 100%;
+  font-size: 13px; /* Increased from 11px */
+}
+
+/* Style for tool icons */
+.icon-action-button svg {
+  width: 16px; /* Increased from 14px */
+  height: 16px; /* Increased from 14px */
 }
 
 .icon-action-button:hover {
-    color: #000;
-    transform: scale(1.1);
+  background-color: #e2e8f0;
 }
-
-.icon-action-button:disabled {
-    color: #ccc;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Specific icon button colors (optional) */
-.icon-action-button.share-button { color: #fd7e14; }
-.icon-action-button.export-button { color: #17a2b8; }
-.icon-action-button.import-button { color: #ffc107; }
-.icon-action-button.delete-button { color: #dc3545; }
-
-.icon-action-button.share-button:hover { color: #e66a00; }
-.icon-action-button.export-button:hover { color: #138496; }
-.icon-action-button.import-button:hover { color: #e0a800; }
-.icon-action-button.delete-button:hover { color: #c82333; }
-
 
 /* --- Toolbar Sections --- */
 .toolbar-section {
-  border-bottom: 1px solid #eee;
-  padding-bottom: 15px;
-}
-.toolbar-section:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 8px; /* Reduced padding */
+  margin-bottom: 8px; /* Reduced margin */
 }
 
-.toolbar h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #555;
-  font-size: 1em;
-  display: flex; /* For alignment with collapse icon */
-  justify-content: space-between; /* Push icon to the right */
-  align-items: center;
-}
-
-/* Collapsible Header Styles */
-.collapsible-header.collapsible {
-    cursor: pointer;
-}
-.collapsible-header.collapsible:hover {
-    color: #007bff;
-}
-
-
-.toolbar p { /* Reduce margin on paragraphs within toolbar */
-    margin-top: 5px;
-    margin-bottom: 5px;
-    font-size: 0.95em;
-}
-
-.toolbar label,
-.toolbar button,
-.toolbar input {
-  display: block;
-  margin-bottom: 8px;
-  /* Let input width be natural or controlled by parent */
-}
-
-/* Specific input sizing */
-.toolbar input[type="file"],
-.toolbar input[type="number"],
-.toolbar input[type="text"] {
-  width: calc(100% - 18px); /* Adjust width considering padding/border */
+/* My Items section styling */
+.toolbar-section.my-items-section {
+  background-color: #faf5ff; /* Very light purple background */
+  border-radius: 6px;
   padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
+  margin-bottom: 8px;
+  border-left: 3px solid #e9d8fd; /* Light purple left border */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
+/* My Items toggler */
+.my-items-section .defaults-toggler {
+  background-color: #f0e6ff; /* Light purple background */
+  color: #805ad5; /* Purple text */
+}
 
-.toolbar button {
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
+/* Create Custom Item section styling */
+.toolbar-section.custom-items-section {
+  background-color: #f5fcff; /* Very light cyan background */
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-left: 3px solid #d8f3fd; /* Light cyan left border */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* Custom Items toggler */
+.custom-items-section .defaults-toggler {
+  background-color: #ebf8ff; /* Light blue background */
+  color: #3182ce; /* Blue text */
+}
+
+/* Default items section styling */
+.toolbar-section.default-items-section {
+  background-color: #f8f9fa; /* Very light gray background */
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-left: 3px solid #edf2f7; /* Light gray left border */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* Placed items section styling */
+.toolbar-section.placed-items-section {
+  background-color: #f7fff7; /* Very light green background */
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-left: 3px solid #e6ffed; /* Light green border */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* Base toggler styling */
+.defaults-toggler {
   cursor: pointer;
-  transition: background-color 0.2s;
-  width: 100%; /* Make buttons fill width */
-  box-sizing: border-box;
-  font-size: 0.9em; /* Slightly smaller font for buttons */
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9em;
+  transition: all 0.2s ease;
 }
 
-.toolbar button:hover {
-  background-color: #0056b3;
+/* Default items toggler */
+.default-items-section .defaults-toggler {
+  background-color: #f0f5fa; /* Light gray background */
+  color: #4a5568; /* Dark gray text */
 }
 
-.toolbar button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+/* Placed items toggler */
+.placed-items-section .defaults-toggler {
+  background-color: #e6ffee; /* Light green background */
+  color: #38a169; /* Green text */
 }
 
-/* Remove specific button styles for actions that moved - These rules are now handled by .icon-action-button */
-/* No need for these anymore */
+/* Furniture item lists */
+.furniture-list button {
+    padding: 8px 12px;
+    width: auto; /* Override block width */
+    min-width: 60px;
+    font-size: 0.9em; /* Slightly larger */
+    margin-bottom: 0;
+    flex-shrink: 0; /* Prevent button from shrinking */
+    box-shadow: none;
+    font-weight: 500; /* Make text semi-bold */
+    border-radius: 5px; /* Slightly rounder corners */
+}
 
+.furniture-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px; /* Increased from 8px */
+  padding: 12px 14px; /* Increased from 10px 12px */
+  background-color: #f8fafc;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border-left: 4px solid;
+  min-height: 40px; /* Ensure minimum height for consistency */
+}
+
+.furniture-list li:hover {
+  background-color: #edf2f7;
+}
+
+.furniture-list li:last-child {
+  margin-bottom: 0;
+}
+
+.furniture-list span {
+  font-size: 0.95em;
+  color: #4a5568;
+  flex-grow: 1; /* Allow text to take space */
+  word-break: break-word; /* Prevent long names from overflowing */
+  margin-bottom: 5px; /* Add space after name */
+}
+
+/* Custom styles for input fields */
+.toolbar input[type="text"],
+.toolbar input[type="number"] {
+  padding: 6px 8px; /* Reduced padding */
+  margin-bottom: 6px; /* Reduced margin */
+  font-size: 0.85em; /* Smaller font */
+}
+
+.add-custom-form {
+  margin-bottom: 8px; /* Reduced margin */
+}
+
+.dimension-inputs-row {
+  display: flex;
+  gap: 4px; /* Small gap */
+  margin-bottom: 6px; /* Reduced margin */
+}
+
+.dimension-inputs-row input[type="text"] {
+  flex-grow: 1;
+  width: 50%;
+}
+
+.dimension-color-row {
+  display: flex;
+  gap: 4px; /* Small gap */
+  margin-bottom: 6px; /* Reduced margin */
+}
+
+.dimension-color-row input[type="color"] {
+  width: 30px;
+  padding: 0;
+  height: 30px;
+}
+
+/* Global/Local toggle switch */
+.global-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.global-toggle-row label {
+  font-size: 0.85em;
+  color: #4a5568;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e0;
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #3182ce;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+/* Scale setting UI */
+.scale-setting-ui {
+  padding: 10px; /* Reduced padding */
+}
+
+.scale-setting-ui h3 {
+  margin-bottom: 12px; /* Reduced margin */
+  font-size: 1.1em; /* Smaller font */
+}
+
+.scale-setting-ui p {
+  margin-bottom: 10px; /* Reduced margin */
+  font-size: 0.9em; /* Smaller font */
+}
+
+/* All icons in the toolbar */
+.toolbar svg {
+  stroke-width: 1.5px; /* Slightly thinner stroke */
+}
 
 .scale-input-group {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   width: 100%; /* Ensure group takes full width */
 }
 
@@ -194,10 +405,13 @@ h1 {
   margin-bottom: 0;
 }
 .scale-input-group span {
+  color: #718096;
+  font-size: 0.9em;
   white-space: nowrap;
   flex-shrink: 0;
 }
 .scale-input-group button {
+    padding: 10px 15px;
     width: auto; /* Allow button to size naturally */
     flex-shrink: 0;
     margin-bottom: 0;
@@ -210,30 +424,21 @@ h1 {
   margin: 0;
 }
 
-.furniture-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 5px;
-  border-bottom: 1px solid #eee;
-  gap: 10px; /* Add gap between text and button */
+/* Default furniture item colors */
+.furniture-list li.furniture-sofa {
+  border-left-color: #6496FF;
 }
-.furniture-list li:last-child {
-  border-bottom: none;
+.furniture-list li.furniture-chair {
+  border-left-color: #6496FF;
 }
-
-.furniture-list span {
-  font-size: 0.9em;
-  flex-grow: 1; /* Allow text to take space */
-  word-break: break-word; /* Prevent long names from overflowing */
+.furniture-list li.furniture-bed {
+  border-left-color: #FFB6C1;
 }
-
-.furniture-list button {
-    width: auto; /* Override block width */
-    padding: 5px 10px;
-    font-size: 0.8em;
-    margin-bottom: 0;
-    flex-shrink: 0; /* Prevent button from shrinking */
+.furniture-list li.furniture-table {
+  border-left-color: #DEB887;
+}
+.furniture-list li.furniture-desk {
+  border-left-color: #DEB887;
 }
 
 /* Header for custom items list */
@@ -241,26 +446,31 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px; /* Space below header */
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .custom-items-header p {
     margin: 0; /* Remove margin from paragraph */
-    font-weight: bold; /* Make heading bold */
+    font-weight: 600; /* Make heading bold */
+    font-size: 1em;
+    color: #4a5568;
 }
 
 .custom-items-header .add-all-button {
+    padding: 8px 12px; /* Increased from 6px 12px */
+    font-size: 0.9em; /* Increased from 0.85em */
     width: auto; /* Don't force full width */
-    padding: 4px 8px; /* Smaller padding */
-    font-size: 0.8em; /* Smaller font */
-    margin-bottom: 0; /* Remove default button margin */
-    background-color: #6c757d; /* Grey */
+    background-color: #718096; /* Grey */
+    box-shadow: none;
+    border-radius: 5px; /* Slightly rounder corners */
+    font-weight: 500; /* Make text semi-bold */
 }
-.custom-items-header .add-all-button:hover {
-    background-color: #5a6268;
+.custom-items-header .add-all-button:hover:not(:disabled) {
+    background-color: #4a5568;
 }
 .custom-items-header .add-all-button:disabled {
-    background-color: #ccc;
+    background-color: #cbd5e0;
 }
 
 
@@ -277,77 +487,85 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 5px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer; /* Indicate items are clickable */
-    transition: background-color 0.2s;
-}
-
-.placed-furniture-list li:last-child {
-    border-bottom: none;
+    padding: 12px;
+    margin-bottom: 8px;
+    background-color: #f8fafc;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
 }
 
 .placed-furniture-list li:hover {
-    background-color: #f8f9fa;
+    background-color: #edf2f7;
+}
+
+.placed-furniture-list li:last-child {
+    margin-bottom: 0;
 }
 
 .placed-furniture-list li.selected {
-    background-color: #e7f3fe; /* Highlight selected item */
-    font-weight: bold;
+    border-left-color: #3182ce;
+    background-color: #ebf8ff;
 }
 
 .placed-furniture-list .item-name {
-    font-size: 0.9em;
+    font-size: 0.95em;
     flex-grow: 1;
+    color: #4a5568;
     margin-right: 10px; /* Space between name and actions */
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .placed-furniture-list .item-actions {
     display: flex;
-    gap: 5px;
-    flex-shrink: 0;
+    gap: 6px;
 }
 
 .placed-furniture-list .icon-button {
-    padding: 3px 6px;
-    font-size: 1em; /* Make icons slightly larger */
-    line-height: 1;
-    width: auto; /* Let button size naturally */
-    border-radius: 3px;
-    background: none; /* Remove background */
-    border: none; /* Remove border */
-    color: #6c757d; /* Default icon color */
+    background: none;
+    border: none;
     cursor: pointer;
-    transition: color 0.2s;
+    font-size: 1em; /* Make icons slightly larger */
+    padding: 6px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #718096;
+    transition: color 0.2s ease;
+    width: auto;
+    background-color: transparent;
 }
 .placed-furniture-list .icon-button:hover {
-    color: #343a40; /* Darker on hover */
+    color: #4a5568;
+    background-color: transparent;
 }
 
 /* Specific icon button colors if needed */
-.placed-furniture-list .edit-button {
-    /* color: #007bff; */ /* Blue */
+.placed-furniture-list .edit-button:hover {
+    color: #3182ce;
 }
-.placed-furniture-list .clone-button {
-    /* color: #28a745; */ /* Green */
+.placed-furniture-list .clone-button:hover {
+    color: #38a169;
 }
-.placed-furniture-list .delete-button {
-    /* color: #dc3545; */ /* Red */
+.placed-furniture-list .delete-button:hover {
+    color: #e53e3e;
 }
 
 
 .canvas-container {
   flex-grow: 1; /* Allow canvas container to take remaining space */
-  background-color: #e9e9e9; /* Slightly different background for contrast */
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  /* padding: 10px; Padding might interfere with size calculation, apply to inner element if needed */
+  position: relative;
+  overflow: auto;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   display: flex; /* Use flex to help center/contain the stage */
   justify-content: center;
   align-items: center;
   overflow: hidden; /* Hide overflow, Konva stage should handle scrolling/zooming */
-  position: relative; /* Needed for absolute positioning of status messages */
   min-height: 300px; /* Ensure a minimum height */
 }
 
@@ -355,34 +573,34 @@ h1 {
 .konvajs-content {
   /* Canvas element will be sized by Konva Stage */
   /* border: 1px solid #ccc; Optional: remove border if container provides enough visual separation */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
 }
 
 .status-message {
     /* Position messages over the canvas */
     position: absolute;
-    bottom: 10px;
-    left: 10px;
-    right: 10px; /* Span across */
-    max-width: calc(100% - 40px); /* Limit width with padding */
-    margin: auto; /* Center if max-width applies */
+    bottom: 20px;
+    left: 20px;
     padding: 10px 15px;
-    border-radius: 4px;
-    z-index: 10; /* Ensure it's above the canvas content */
-    text-align: center;
-    font-size: 0.9em;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    background-color: rgba(74, 85, 104, 0.9);
+    color: white;
+    font-size: 14px;
+    max-width: 90%;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .status-message.info {
-    background-color: #e7f3fe;
-    color: #0c5460;
-    border: 1px solid #b8daff;
+    background-color: rgba(49, 130, 206, 0.9);
 }
 
 .status-message.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background-color: rgba(229, 62, 62, 0.9);
 }
 
 /* Style for the scale line (visual aid) */
@@ -390,18 +608,1108 @@ h1 {
 /* Example: .scale-line { stroke: cyan; stroke-width: 5px; } */
 
 .scale-display { /* Style for the displayed scale text */
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
     font-size: 0.9em;
-    color: #333;
-    margin-top: 10px;
-    margin-bottom: 0;
+    font-weight: 500;
+    color: #4a5568;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 /* Basic Loading Indicator */
 .loading-message {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    font-size: 1.5em;
-    color: #555;
+    padding: 20px;
+    color: #718096;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+/* Empty state styles */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 80vh;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+.empty-state h1 {
+  font-size: 42px;
+  margin-bottom: 24px;
+}
+
+.empty-state p {
+  font-size: 18px;
+  color: #4a5568;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.empty-state .upload-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 28px;
+  font-size: 18px;
+  font-weight: 500;
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+}
+
+.empty-state .upload-button:hover {
+  background-color: #2c5282;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
+}
+
+.empty-state .upload-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(49, 130, 206, 0.3);
+}
+
+/* Restore essential button hover states */
+.icon-action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.icon-action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Button colors */
+.icon-action-button.upload-button { 
+  background-color: #3182ce; /* Blue */
+}
+
+.icon-action-button.download-button { 
+  background-color: #38a169; /* Green */
+}
+
+.icon-action-button.share-button { 
+  background-color: #805ad5; /* Purple */
+}
+
+/* Legacy buttons (kept for reference) */
+.icon-action-button.delete-button { 
+  background-color: #e53e3e; /* Red */
+}
+
+.icon-action-button.export-button { 
+  background-color: #38a169; /* Green */
+}
+
+.icon-action-button.import-button { 
+  background-color: #3182ce; /* Blue */
+}
+
+/* Ensure section headers look good */
+.toolbar h3 {
+  margin: 0 0 8px 0;
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+/* Make Add button consistently sized */
+.furniture-list button {
+  padding: 4px 8px;
+  min-width: 40px;
+  font-size: 0.8em;
+  margin: 0;
+}
+
+/* Initial setup styles */
+.toolbar-section.initial-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  text-align: center;
+}
+
+.primary-button {
+  padding: 10px 16px;
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 180px;
+}
+
+/* Style for toolbar buttons */
+.toolbar button {
+  padding: 8px;
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85em;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.toolbar button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Defaults toggler styling */
+.defaults-toggler .toggle-icon {
+  transition: transform 0.2s ease;
+}
+
+.defaults-toggler.collapsed .toggle-icon {
+  transform: rotate(-90deg);
+}
+
+/* Toolbar paragraphs */
+.toolbar p {
+  margin: 4px 0;
+  font-size: 0.85em;
+  color: #718096;
+}
+
+/* Placed items list */
+.furniture-list .item-name {
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  padding-right: 5px;
+}
+
+.furniture-list .item-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.furniture-list .icon-button {
+  padding: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin: 0;
+  width: auto;
+  min-width: auto;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #718096;
+  transition: color 0.2s ease;
+}
+
+.furniture-list .icon-button:hover {
+  color: #3182ce;
+  background: none;
+}
+
+.furniture-list .edit-button:hover {
+  color: #3182ce;
+}
+
+.furniture-list .clone-button:hover {
+  color: #38a169;
+}
+
+.furniture-list .delete-button:hover {
+  color: #e53e3e;
+}
+
+/* Selected furniture item */
+.furniture-list li.selected {
+  background-color: #ebf8ff;
+}
+
+/* Button overrides for toolbar action buttons */
+.toolbar-top-actions .icon-action-button {
+  height: 28px;
+}
+
+/* Make dimensions visible only on hover for furniture items */
+.furniture-dimensions {
+  font-size: 0.75em;
+  color: #718096;
+  margin-top: 2px;
+  visibility: hidden; /* Hide text but preserve space */
+  height: 1.2em; /* Set fixed height */
+  opacity: 0;
+  transition: visibility 0.2s, opacity 0.2s;
+  display: block; /* Always display */
+}
+
+.furniture-list li:hover .furniture-dimensions {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Scale Toolbar (minimal toolbar for scale setting) */
+.scale-toolbar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: auto;
+  max-width: 90%;
+  text-align: center;
+}
+
+.scale-toolbar button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: #3182ce;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scale-toolbar button:hover {
+  background-color: #2c5282;
+  transform: translateY(-1px);
+}
+
+.scale-input-container {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.scale-input-container input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+}
+
+.scale-setting-status {
+  font-size: 14px;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+/* Scale Instruction Modal */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.scale-instruction-modal {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 90%;
+  padding: 24px;
+  position: relative;
+}
+
+.scale-instruction-modal h2 {
+  color: #3182ce;
+  font-size: 24px;
+  margin-top: 0;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.scale-instructions {
+  margin-bottom: 24px;
+}
+
+.scale-instructions p {
+  color: #4a5568;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.scale-instructions ol {
+  padding-left: 24px;
+  margin-bottom: 20px;
+}
+
+.scale-instructions li {
+  margin-bottom: 12px;
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.scale-tip {
+  font-style: italic;
+  color: #718096;
+  background-color: #f0f8ff;
+  padding: 10px;
+  border-radius: 6px;
+  border-left: 4px solid #3182ce;
+}
+
+.scale-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.dont-show-again {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4a5568;
+  font-size: 14px;
+}
+
+.dont-show-again input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Scale Information Section */
+.scale-info-section {
+  margin-bottom: 16px;
+}
+
+.scale-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #f0f8ff;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.scale-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.scale-value {
+  font-weight: 500;
+  color: #3182ce;
+  margin: 0;
+  font-size: 14px;
+}
+
+.reset-scale-button,
+.import-button {
+  padding: 6px 10px;
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-scale-button:hover,
+.import-button:hover {
+  background-color: #e2e8f0;
+  color: #2d3748;
+}
+
+.import-button {
+  background-color: #ebf8ff;
+  color: #3182ce;
+}
+
+.import-button:hover {
+  background-color: #bee3f8;
+  color: #2c5282;
+}
+
+/* Button container for tooltip */
+.button-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Tooltip styling */
+.button-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 180px;
+  background-color: #4a5568;
+  color: white;
+  font-size: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-top: 5px;
+  z-index: 100;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+/* Show tooltip only on hover for disabled buttons */
+.button-container:hover .button-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.button-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent #4a5568 transparent;
+}
+
+/* Import button in scale section */
+.import-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #ebf8ff;
+  color: #3182ce;
+  font-size: 11px;
+  padding: 6px 8px;
+}
+
+.import-button svg {
+  flex-shrink: 0;
+}
+
+/* Add styles for icon-only buttons */
+.icon-only-button {
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-only-button:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.icon-only-button:active {
+  transform: translateY(0);
+}
+
+/* Tooltip for icon-only buttons */
+.icon-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.icon-button-container:hover .button-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Basic styling for setup and initial-setup sections */
+.toolbar-section.setup-section,
+.toolbar-section.initial-setup {
+  background-color: transparent;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border: none;
+  box-shadow: none;
+}
+
+/* Custom furniture list items */
+.custom-furniture-list li {
+  padding: 10px 14px; /* Reduced padding */
+  min-height: 32px; /* Reduced minimum height */
+  margin-bottom: 8px; /* Reduced margin between items */
+  border-left-width: 5px;
+  background-color: #f8fafc;
+}
+
+.custom-furniture-list li:hover {
+  background-color: #f0f7ff;
+}
+
+.custom-furniture-list span {
+  font-weight: 500; /* Make name semi-bold */
+}
+
+/* Hide the item-scope display since we're not showing it anymore */
+.item-scope {
+  display: none;
+}
+
+/* Adjust furniture dimensions for custom items */
+.custom-furniture-list .furniture-dimensions {
+  margin-top: 0; /* Remove top margin */
+  height: 1em; /* Slightly smaller height */
+}
+
+/* Make the custom items container slightly smaller since items are more compact */
+.custom-items-container {
+  max-height: 230px; /* Slightly reduced from 250px */
+}
+
+/* Default furniture list items */
+.default-items-section .furniture-list li {
+  background-color: #f8f8f8;
+  border-left-width: 4px;
+}
+
+.default-items-section .furniture-list li:hover {
+  background-color: #f0f0f5;
+}
+
+/* Scrollable containers for items lists */
+.custom-items-container, 
+.default-items-container,
+.placed-items-container {
+  max-height: 250px; /* Increased from 200px */
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding-right: 5px; /* Add padding for scrollbar */
+  /* Scrollbar styling for webkit browsers */
+  scrollbar-width: thin;
+}
+
+/* Custom styling for webkit scrollbars */
+.custom-items-container::-webkit-scrollbar,
+.default-items-container::-webkit-scrollbar,
+.placed-items-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-items-container::-webkit-scrollbar-track,
+.default-items-container::-webkit-scrollbar-track,
+.placed-items-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-items-container::-webkit-scrollbar-thumb,
+.default-items-container::-webkit-scrollbar-thumb,
+.placed-items-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 10px;
+}
+
+.custom-items-container::-webkit-scrollbar-thumb:hover,
+.default-items-container::-webkit-scrollbar-thumb:hover,
+.placed-items-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Placed items list styling */
+.placed-items-container .furniture-list li {
+  background-color: #f8fff8;
+  border-left-width: 4px;
+}
+
+.placed-items-container .furniture-list li:hover {
+  background-color: #efffef;
+}
+
+.placed-items-container .furniture-list li.selected {
+  background-color: #e6ffee;
+  border-left-color: #38a169 !important;
+}
+
+.item-scope {
+  font-size: 0.7em;
+  font-style: italic;
+  color: #718096;
+  margin-top: 2px;
+  display: block; /* Always take up space */
+  height: 1.5em; /* Fixed height */
+  padding: 1px 5px;
+  border-radius: 3px;
+  background-color: #f0f5fa;
+}
+
+/* Add styles for custom item actions */
+.custom-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Increased from 5px */
+}
+
+.edit-template-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px; /* Increased from 3px */
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-template-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Modal styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.edit-template-modal {
+  background-color: white;
+  border-radius: 8px;
+  padding: 25px; /* Increased from 20px */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 450px; /* Increased from 400px */
+  max-width: 90%;
+}
+
+.edit-template-modal h3 {
+  font-size: 1.2em; /* Larger heading */
+  margin-top: 0;
+  margin-bottom: 20px; /* More space below heading */
+  color: #3182ce; /* Blue color to match theme */
+}
+
+.edit-template-form {
+  margin: 20px 0; /* Increased from 15px */
+}
+
+.form-group {
+  margin-bottom: 20px; /* Increased from 15px */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-group label {
+  font-size: 1em; /* Larger font */
+  font-weight: 500; /* Semi-bold */
+  color: #4a5568;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px; /* Increased from 10px */
+  margin-top: 25px; /* Increased from 20px */
+}
+
+.modal-actions button {
+  padding: 10px 20px; /* Increased from 8px 16px */
+  border-radius: 6px; /* Slightly rounder */
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+  font-size: 1em; /* Larger font */
+  font-weight: 500; /* Semi-bold */
+}
+
+.modal-actions .primary-button {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+}
+
+/* Existing switch styles or add them if missing */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #3182ce;
+}
+
+input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
+/* Scale Information Display on Canvas */
+.scale-info-display {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 100;
+  max-width: 150px;
+}
+
+.scale-info-display .scale-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3182ce;
+  margin-bottom: 6px;
+}
+
+.scale-info-display .reset-scale-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scale-info-display .reset-scale-button:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+/* Logo styling */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.app-logo {
+  max-width: 300px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.toolbar-logo {
+  max-width: 180px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+/* Footer styles */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(250, 250, 250, 0.93);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+  padding: 12px 16px;
+  font-size: 1rem;
+  z-index: 100;
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+  margin: 0 auto;
+}
+
+.footer span {
+  color: #444;
+  font-weight: 500;
+  position: relative;
+}
+
+.footer-text {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer-name {
+  font-weight: 600;
+  color: #3182CE;
+  position: relative;
+  display: inline-block;
+}
+
+/* Remove span hover effects */
+.footer span:hover {
+  color: inherit;
+  transform: none;
+}
+
+.footer span:hover .footer-name {
+  transform: none;
+  text-shadow: none;
+}
+
+.footer span::after {
+  display: none;
+}
+
+/* Bubbles animation */
+.footer-text {
+  position: relative;
+  padding: 0 8px;
+  min-width: 200px;
+  min-height: 24px;
+}
+
+@keyframes bubble {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.1);
+  }
+  25% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.4;
+    transform: translateY(-40px) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.8);
+  }
+}
+
+.bubble {
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(49, 130, 206, 0.3);
+  box-shadow: 0 0 5px rgba(49, 130, 206, 0.5);
+  animation: bubble 4s ease-in-out forwards;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Remove static bubble selectors that are no longer needed */
+.bubble:nth-child(1),
+.bubble:nth-child(2),
+.bubble:nth-child(3),
+.bubble:nth-child(4),
+.bubble:nth-child(5) {
+  display: none;
+}
+
+.social-links {
+  display: flex;
+  gap: 20px;
+}
+
+.social-links a {
+  color: #666;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  transform-origin: center;
+}
+
+.social-links a svg {
+  width: 20px;
+  height: 20px;
+  transition: all 0.3s ease;
+}
+
+.social-links a:hover {
+  color: #3182CE;
+  transform: translateY(-3px) scale(1.15);
+}
+
+.social-links a:nth-child(1):hover {
+  color: #1DA1F2; /* Twitter blue */
+}
+
+.social-links a:nth-child(2):hover {
+  color: #333; /* GitHub dark */
+}
+
+.social-links a:nth-child(3):hover {
+  color: #D14836; /* Email/Gmail red */
+}
+
+/* Icon animations */
+.twitter-icon:hover svg {
+  animation: wobble 0.8s ease;
+}
+
+.github-icon:hover svg {
+  animation: spin 0.8s ease;
+}
+
+.email-icon:hover svg {
+  animation: pulse 0.8s ease;
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-10deg); }
+  50% { transform: rotate(0); }
+  75% { transform: rotate(10deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.scale-modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.secondary-button {
+  background-color: #e0e0e0;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.secondary-button:hover {
+  background-color: #d0d0d0;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+}
+
+.zoom-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: white;
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.zoom-button:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.zoom-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.zoom-button svg {
+  stroke: #444;
 }

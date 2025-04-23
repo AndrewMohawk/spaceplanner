@@ -1,3 +1,4 @@
+/* Reusing general modal styling from EditFurnitureModal.css */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -21,7 +22,12 @@
   max-width: 90%;
 }
 
-.modal-content h2 {
+/* Share modal specific styles */
+.share-modal {
+  width: 460px;
+}
+
+.share-modal h2 {
   margin-top: 0;
   margin-bottom: 20px;
   color: #2d3748;
@@ -31,57 +37,36 @@
   padding-bottom: 12px;
 }
 
-.modal-content .form-group {
-  margin-bottom: 18px;
+.share-options {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f8fafc;
 }
 
-.modal-content label {
-  display: block;
-  margin-bottom: 6px;
+.checkbox-group {
+  margin-bottom: 12px;
+}
+
+.checkbox-group:last-child {
+  margin-bottom: 0;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
   font-weight: 500;
   color: #4a5568;
-  font-size: 0.95em;
-}
-
-.modal-content input[type="text"],
-.modal-content input[type="number"] {
-  width: calc(100% - 16px);
-  padding: 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 1em;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.modal-content input[type="text"]:focus,
-.modal-content input[type="number"]:focus {
-  border-color: #3182ce;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
-}
-
-.modal-content input[type="color"] {
-  padding: 0;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  height: 40px;
-  width: 60px;
-  vertical-align: middle;
   cursor: pointer;
-  transition: border-color 0.2s;
 }
 
-.modal-content input[type="color"]:focus {
-  border-color: #3182ce;
-  outline: none;
-}
-
-.modal-content .color-hex {
-  margin-left: 12px;
-  font-family: 'Inter', monospace;
-  color: #718096;
-  font-size: 0.9em;
-  vertical-align: middle;
+.checkbox-group input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 .modal-actions {
@@ -102,18 +87,23 @@
   transition: all 0.2s ease;
 }
 
-.modal-actions .save-button {
-  background-color: #38a169;
+.share-modal .share-button {
+  background-color: #4299e1;
   color: white;
 }
 
-.modal-actions .save-button:hover {
-  background-color: #2f855a;
+.share-modal .share-button:hover:not(:disabled) {
+  background-color: #3182ce;
   transform: translateY(-1px);
 }
 
-.modal-actions .save-button:active {
+.share-modal .share-button:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.share-modal .share-button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
 }
 
 .modal-actions button[type="button"] {
@@ -128,4 +118,4 @@
 
 .modal-actions button[type="button"]:active {
   transform: translateY(0);
-}
+} 
