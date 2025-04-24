@@ -40,6 +40,9 @@ const FloorPlanCanvas = forwardRef(({
   const [mousePos, setMousePos] = useState(null);
   // Add zoom level state
   const [zoomLevel, setZoomLevel] = useState(1);
+  // Add state for panning
+  const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
 
   // Forward the stageRef to parent components
   useImperativeHandle(ref, () => ({
@@ -57,8 +60,8 @@ const FloorPlanCanvas = forwardRef(({
       if (!floorplanImage) return { x: 0, y: 0 };
       
       // Convert stage coordinates to image coordinates
-      const imageX = (stagePoint.x - imageOffsetX) / imageScaleFactor;
-      const imageY = (stagePoint.y - imageOffsetY) / imageScaleFactor;
+      const imageX = (stagePoint.x - imageOffsetX - stagePosition.x) / imageScaleFactor;
+      const imageY = (stagePoint.y - imageOffsetY - stagePosition.y) / imageScaleFactor;
       
       // Ensure coords are within image bounds
       const clampedX = Math.max(0, Math.min(imageX, imageSize.width));
@@ -143,6 +146,13 @@ const FloorPlanCanvas = forwardRef(({
       }
   }, [imageElement, stageSize, imageSize, zoomLevel]);
 
+  // Reset stage position when zoom level changes to 1
+  useEffect(() => {
+    if (zoomLevel === 1) {
+      setStagePosition({ x: 0, y: 0 });
+    }
+  }, [zoomLevel]);
+
   const displayedImageWidth = imageSize.width * imageScaleFactor;
   const displayedImageHeight = imageSize.height * imageScaleFactor;
   const imageOffsetX = (stageSize.width - displayedImageWidth) / 2;
@@ -173,15 +183,16 @@ const FloorPlanCanvas = forwardRef(({
     const pos = stage.getPointerPosition();
     if (!pos) return;
     
-    const imageX = (pos.x - imageOffsetX) / imageScaleFactor;
-    const imageY = (pos.y - imageOffsetY) / imageScaleFactor;
+    // Adjust for stage position when calculating image coordinates
+    const imageX = (pos.x - imageOffsetX - stagePosition.x) / imageScaleFactor;
+    const imageY = (pos.y - imageOffsetY - stagePosition.y) / imageScaleFactor;
     
     // Clamp to image boundaries
     const clampedX = Math.max(0, Math.min(imageX, imageSize.width));
     const clampedY = Math.max(0, Math.min(imageY, imageSize.height));
     
     setMousePos({ x: clampedX, y: clampedY });
-  }, [isSettingScale, scale.points, imageOffsetX, imageOffsetY, imageScaleFactor, imageSize.width, imageSize.height]);
+  }, [isSettingScale, scale.points, imageOffsetX, imageOffsetY, imageScaleFactor, imageSize.width, imageSize.height, stagePosition]);
 
   // Handle wheel zoom
   const handleWheel = useCallback((e) => {
@@ -194,8 +205,9 @@ const FloorPlanCanvas = forwardRef(({
     
     const oldZoom = zoomLevel;
     const scaleBy = 1.05;
-    const pointer = stage.getPointerPosition();
     
+    // Get pointer position relative to the stage
+    const pointer = stage.getPointerPosition();
     if (!pointer) return;
     
     // Calculate new zoom level
@@ -204,11 +216,65 @@ const FloorPlanCanvas = forwardRef(({
     // Limit zoom range
     const limitedZoom = Math.max(0.5, Math.min(5, newZoom));
     
-    setZoomLevel(limitedZoom);
-  }, [zoomLevel, isSettingScale]);
+    // If zoom level is changing, calculate the new stage position
+    if (limitedZoom !== oldZoom) {
+      // Convert pointer position to coordinate in the original scale
+      const pointTo = {
+        x: (pointer.x - stagePosition.x) / oldZoom,
+        y: (pointer.y - stagePosition.y) / oldZoom
+      };
+      
+      // Calculate new position that keeps the point under mouse
+      const newPos = {
+        x: pointer.x - pointTo.x * limitedZoom,
+        y: pointer.y - pointTo.y * limitedZoom
+      };
+      
+      setStagePosition(newPos);
+      setZoomLevel(limitedZoom);
+    }
+  }, [zoomLevel, isSettingScale, stagePosition]);
+
+  // Use Konva's built-in dragging for the stage instead of custom drag logic
+  const handleStageDragStart = useCallback(() => {
+    // Allow dragging regardless of zoom level
+    // Skip only when setting scale
+    if (isSettingScale) {
+      return false; // Prevent drag while setting scale
+    }
+    setIsDragging(true);
+    return true; // Allow drag
+  }, [isSettingScale]);
+
+  const handleStageDragMove = useCallback(() => {
+    // Skip only when setting scale
+    if (isSettingScale) {
+      return;
+    }
+    
+    // Update our state to match Konva's internal dragging
+    if (stageRef.current) {
+      setStagePosition({
+        x: stageRef.current.x(),
+        y: stageRef.current.y()
+      });
+    }
+  }, [isSettingScale]);
+
+  const handleStageDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
   // --- Event Handlers ---
   const handleStageClick = (e) => {
+    // Don't process clicks when we're finished dragging
+    // Konva triggers click events after drag events, so we need to check
+    // if the click is actually part of a drag operation
+    if (isDragging || e.evt.button !== 0) {
+      // Only handle left mouse button clicks
+      return;
+    }
+    
     const stage = e.target.getStage();
     if (!stage) return;
     const target = e.target;
@@ -216,8 +282,9 @@ const FloorPlanCanvas = forwardRef(({
        if (isSettingScale) {
             const pos = stage.getPointerPosition();
             if (!pos) return;
-            const imageX = (pos.x - imageOffsetX) / imageScaleFactor;
-            const imageY = (pos.y - imageOffsetY) / imageScaleFactor;
+            // Adjust for stage position when calculating image coordinates
+            const imageX = (pos.x - imageOffsetX - stagePosition.x) / imageScaleFactor;
+            const imageY = (pos.y - imageOffsetY - stagePosition.y) / imageScaleFactor;
             const tolerance = 1 / imageScaleFactor;
             if (imageX >= -tolerance && imageX <= imageSize.width + tolerance &&
                 imageY >= -tolerance && imageY <= imageSize.height + tolerance)
@@ -253,8 +320,12 @@ const FloorPlanCanvas = forwardRef(({
       group.scaleX(1);
       group.scaleY(1);
       const centerPos = { x: group.x(), y: group.y() };
+      
+      // Calculate position relative to the unpanned stage/image
+      // The Stage component handles the stagePosition offset
       const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
       const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
+      
       onFurnitureMove(group.id(), {
           x: imageRelativeX,
           y: imageRelativeY,
@@ -268,8 +339,12 @@ const FloorPlanCanvas = forwardRef(({
       const group = e.target;
       if (!group || !(group instanceof Konva.Group)) return;
       const centerPos = { x: group.x(), y: group.y() };
+      
+      // Calculate position relative to the unpanned stage/image
+      // The Stage component handles the stagePosition offset
       const imageRelativeX = (centerPos.x - imageOffsetX) / imageScaleFactor;
       const imageRelativeY = (centerPos.y - imageOffsetY) / imageScaleFactor;
+      
       const rectNode = group.findOne('Rect');
       const originalWidth = rectNode?.attrs?.originalWidthInches;
       const originalHeight = rectNode?.attrs?.originalHeightInches;
@@ -301,6 +376,7 @@ const FloorPlanCanvas = forwardRef(({
       }
       
       // Convert image coordinates to stage coordinates
+      // The Stage component's x/y props handle the stagePosition offset, so we don't add it here
       const stageX = point.x * imageScaleFactor + imageOffsetX;
       const stageY = point.y * imageScaleFactor + imageOffsetY;
       
@@ -316,6 +392,10 @@ const FloorPlanCanvas = forwardRef(({
       };
   };
 
+  // Determine if stage should display hand cursor for panning
+  // Allow panning at any zoom level
+  const canPan = !isSettingScale;
+
   // --- Rendering ---
   return (
     <div ref={containerRef} className="canvas-container">
@@ -325,8 +405,22 @@ const FloorPlanCanvas = forwardRef(({
         height={stageSize.height}
         onClick={handleStageClick}
         onTap={handleStageClick}
-        onMouseMove={handleMouseMove}
+        onMouseMove={(e) => {
+          handleMouseMove(e);
+          if (isDragging) {
+            handleStageDragMove();
+          }
+        }}
         onWheel={handleWheel}
+        x={stagePosition.x}
+        y={stagePosition.y}
+        draggable={canPan}
+        onDragStart={handleStageDragStart}
+        onDragMove={handleStageDragMove}
+        onDragEnd={handleStageDragEnd}
+        style={{ 
+          cursor: canPan ? (isDragging ? 'grabbing' : 'grab') : 'default'
+        }}
       >
         <Layer ref={layerRef}>
           {/* Background Image */}
@@ -444,7 +538,8 @@ const FloorPlanCanvas = forwardRef(({
                   fill={itemColor} // Use item's color
                   opacity={itemOpacity} // Use item's opacity
                   stroke={selectedFurnitureId === item.id ? 'red' : 'black'}
-                  strokeWidth={selectedFurnitureId === item.id ? 3 / imageScaleFactor : 1.5 / imageScaleFactor}
+                  // Use a fixed stroke width independent of scale
+                  strokeWidth={selectedFurnitureId === item.id ? 2 : 1}
                   originalWidthInches={item.width}
                   originalHeightInches={item.height}
                   listening={true}
@@ -503,10 +598,11 @@ const FloorPlanCanvas = forwardRef(({
              rotateEnabled={true}
              rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
              rotationSnapTolerance={10}
-             borderStrokeWidth={1.5 / (stageRef.current?.scaleX() ?? 1)}
-             anchorStrokeWidth={1 / (stageRef.current?.scaleX() ?? 1)}
-             rotateAnchorOffset={20 / (stageRef.current?.scaleX() ?? 1)}
-             anchorSize={10 / (stageRef.current?.scaleX() ?? 1)}
+             // Use fixed pixel values for Transformer elements
+             borderStrokeWidth={1.5}
+             anchorStrokeWidth={1}
+             rotateAnchorOffset={20}
+             anchorSize={10}
              anchorFill="#ddd"
              anchorStroke="black"
              borderStroke="red"
@@ -515,7 +611,7 @@ const FloorPlanCanvas = forwardRef(({
         </Layer>
       </Stage>
       
-      {/* Zoom Controls */}
+      {/* Zoom Controls with Reset Pan button */}
       <div className="zoom-controls">
         <button 
           className="zoom-button zoom-in" 
@@ -540,8 +636,11 @@ const FloorPlanCanvas = forwardRef(({
         </button>
         <button 
           className="zoom-button zoom-reset" 
-          onClick={() => setZoomLevel(1)}
-          title="Reset Zoom"
+          onClick={() => {
+            setZoomLevel(1);
+            setStagePosition({ x: 0, y: 0 });
+          }}
+          title="Center & Reset Zoom"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -560,6 +659,13 @@ const FloorPlanCanvas = forwardRef(({
       )}
        {image && pixelsPerInch === null && !isSettingScale && scale.points.length !== 2 && ( <div className="status-message info"> Configure scale to begin... </div> )}
        {image && pixelsPerInch === null && !isSettingScale && scale.points.length === 2 && ( <div className="status-message info"> Enter the real-world length... </div> )}
+       
+       {/* Pan Instructions when in normal mode */}
+       {!isSettingScale && (
+         <div className="status-message info">
+           Click and drag to pan the view
+         </div>
+       )}
        
        {/* Scale Information Display - Bottom Right */}
        {pixelsPerInch !== null && (

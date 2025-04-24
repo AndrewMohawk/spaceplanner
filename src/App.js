@@ -1067,95 +1067,116 @@ function App() {
   
   const handleShareSubmit = async (shareConfig) => {
     try {
-      // Create a temporary canvas to generate the shareable image
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      // Get the floor plan canvas (assumes the canvas is already in the DOM)
-      const floorplanCanvas = document.getElementById('floorplan-canvas');
-      if (!floorplanCanvas) {
-        throw new Error('Floor plan canvas not found');
+      // Get the stage instance using the ref
+      const stage = floorplanCanvasRef.current?.getStage();
+      if (!stage) {
+        throw new Error('Floor plan stage reference not found');
       }
+
+      // Get the current stage content as a data URL
+      const stageImageDataUrl = stage.toDataURL({ pixelRatio: 2 }); // Use pixelRatio for higher resolution
+
+      // Create a temporary canvas to compose the final image
+      const tempCanvas = document.createElement('canvas');
+      const ctx = tempCanvas.getContext('2d');
       
-      // Set canvas dimensions to match the floor plan canvas
-      canvas.width = floorplanCanvas.width;
-      canvas.height = floorplanCanvas.height;
-      
-      // Add extra space at the top for title and at bottom for scale info
-      const originalHeight = canvas.height;
-      const titlePadding = shareConfig.title ? 60 : 0;
-      const furniturePadding = shareConfig.includeFurniture && furniture.length > 0 ? 
-        Math.min(30 + furniture.length * 25, 300) : 0;
-      const scalePadding = shareConfig.includeScale ? 50 : 0;
-      
-      // Resize canvas to accommodate the additional content
-      canvas.height = originalHeight + titlePadding + scalePadding + (shareConfig.includeFurniture ? furniturePadding : 0);
-      
-      // Fill the canvas with white background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // 1. FIRST: Draw title at the top if requested
-      if (shareConfig.title) {
-        ctx.font = 'bold 32px Arial';
-        ctx.fillStyle = '#333';
-        ctx.textAlign = 'center';
-        ctx.fillText(shareConfig.title, canvas.width / 2, 40);
-      }
-      
-      // 2. SECOND: Draw the floor plan onto our temporary canvas
-      // Position it after the title
-      ctx.drawImage(floorplanCanvas, 0, titlePadding, canvas.width, originalHeight);
-      
-      // 3. THIRD: Add scale information if requested
-      if (shareConfig.includeScale && pixelsPerInch > 0) {
-        const scaleY = titlePadding + originalHeight + 30;
-        ctx.font = 'bold 18px Arial';
-        ctx.fillStyle = '#333';
-        ctx.textAlign = 'left';
-        ctx.fillText(`Scale: 1 inch = ${pixelsPerInch.toFixed(2)} pixels`, 20, scaleY);
-      }
-      
-      // 4. FOURTH: Add furniture list if requested
-      if (shareConfig.includeFurniture && furniture.length > 0) {
-        const startY = titlePadding + originalHeight + (shareConfig.includeScale ? 70 : 30);
+      // Load the stage image onto the temporary canvas
+      const stageImage = new Image();
+      stageImage.onload = () => {
+        // Set initial canvas dimensions based on the stage image
+        tempCanvas.width = stageImage.width;
+        tempCanvas.height = stageImage.height;
         
-        ctx.font = 'bold 20px Arial';
-        ctx.fillStyle = '#333';
-        ctx.textAlign = 'left';
-        ctx.fillText('Furniture List:', 20, startY);
+        // Calculate padding needed for extra content
+        const titlePadding = shareConfig.title ? 60 : 0;
+        const furniturePadding = shareConfig.includeFurniture && furniture.length > 0 ? 
+          Math.min(40 + furniture.length * 25, 300) : 0;
+        const scalePadding = shareConfig.includeScale ? 50 : 0;
+        const totalPadding = titlePadding + furniturePadding + scalePadding;
         
-        ctx.font = '16px Arial';
-        furniture.forEach((item, index) => {
-          const itemColor = item.color || '#3182CE';
-          
-          // Draw colored rectangle as a bullet
-          ctx.fillStyle = itemColor;
-          ctx.fillRect(25, startY + 15 + (index * 25) - 10, 10, 10);
-          
-          // Draw text with item name and dimensions
+        // Resize canvas height to accommodate the additional content
+        tempCanvas.height += totalPadding;
+        
+        // Fill the entire canvas with white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Draw the stage image onto the canvas, below the title padding
+        ctx.drawImage(stageImage, 0, titlePadding);
+        
+        // --- Draw additional content below the stage image --- 
+        let currentY = titlePadding + stageImage.height;
+        
+        // Draw title at the top if requested
+        if (shareConfig.title) {
+          ctx.font = 'bold 32px Arial';
           ctx.fillStyle = '#333';
-          ctx.fillText(
-            `${item.name} (${item.width}″ × ${item.height}″)`, 
-            45, 
-            startY + 15 + (index * 25)
-          );
-        });
-      }
+          ctx.textAlign = 'center';
+          // Draw title within the title padding area
+          ctx.fillText(shareConfig.title, tempCanvas.width / 2, 40); 
+        }
+        
+        // Draw scale information if requested
+        if (shareConfig.includeScale && pixelsPerInch > 0) {
+          currentY += 30; // Add some top margin
+          ctx.font = 'bold 18px Arial';
+          ctx.fillStyle = '#333';
+          ctx.textAlign = 'left';
+          ctx.fillText(`Scale: 1 inch = ${pixelsPerInch.toFixed(2)} pixels`, 20, currentY);
+          currentY += 20; // Add bottom margin for scale
+        }
+        
+        // Draw furniture list if requested
+        if (shareConfig.includeFurniture && furniture.length > 0) {
+          currentY += 10; // Add some top margin
+          ctx.font = 'bold 20px Arial';
+          ctx.fillStyle = '#333';
+          ctx.textAlign = 'left';
+          ctx.fillText('Furniture List:', 20, currentY);
+          currentY += 10; // Space after title
+          
+          ctx.font = '16px Arial';
+          furniture.forEach((item, index) => {
+            currentY += 25; // Space for each item
+            const itemColor = item.color || '#3182CE';
+            
+            // Draw colored rectangle as a bullet
+            ctx.fillStyle = itemColor;
+            ctx.fillRect(25, currentY - 10, 10, 10);
+            
+            // Draw text with item name and dimensions
+            ctx.fillStyle = '#333';
+            ctx.fillText(
+              `${item.name} (${item.width}″ × ${item.height}″)`, 
+              45, 
+              currentY
+            );
+          });
+        }
+        
+        // Convert the composed canvas to a final data URL
+        const finalImageUrl = tempCanvas.toDataURL('image/png');
+        
+        // Create and trigger download
+        const link = document.createElement('a');
+        link.href = finalImageUrl;
+        link.download = `${shareConfig.title || 'floor-plan'}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Success!
+        alert('Your floor plan has been saved as an image!');
+      };
       
-      // Convert canvas to data URL
-      const imageUrl = canvas.toDataURL('image/png');
+      stageImage.onerror = (err) => {
+        console.error('Error loading stage image data:', err);
+        throw new Error('Failed to load stage image for sharing.');
+      };
       
-      // Create and trigger download
-      const link = document.createElement('a');
-      link.href = imageUrl;
-      link.download = `${shareConfig.title || 'floor-plan'}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Success!
-      alert('Your floor plan has been saved as an image!');
+      // Set the source for the image object
+      stageImage.src = stageImageDataUrl;
+
     } catch (error) {
       console.error('Error sharing layout:', error);
       alert(`Failed to share layout: ${error.message}`);
