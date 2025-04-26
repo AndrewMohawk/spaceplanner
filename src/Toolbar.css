@@ -19,4 +19,203 @@
 .share-button:hover:not(:disabled) .config-icon {
   transform: rotate(30deg);
   transition: transform 0.3s ease;
+}
+
+/* Save Image button styles */
+.save-icon-container {
+  position: relative;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+/* Highlight save button on hover */
+.save-image-button:hover:not(:disabled) .save-icon {
+  fill: rgba(255, 255, 255, 0.2);
+  transition: fill 0.3s ease;
+}
+
+/* Compact toolbar styles */
+.toolbar {
+  background-color: #f8f9fa;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  width: 250px;
+  padding: 8px;
+}
+
+.toolbar-section {
+  margin-bottom: 12px;
+}
+
+.toolbar-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+/* Compact styles for the furniture lists */
+.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+}
+
+.compact-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-left: 3px solid;
+  background-color: #f0f2f5;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.furniture-dimensions {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.mini-button {
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  background: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.mini-button:hover {
+  background: #dee2e6;
+}
+
+.mini-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.compact-button {
+  padding: 3px 6px;
+  font-size: 0.8rem;
+}
+
+.compact-list {
+  margin-top: 4px;
+}
+
+/* Default section adjustments */
+.defaults-toggler {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.defaults-toggler:hover {
+  background-color: #dee2e6;
+}
+
+.my-items-section, .default-items-section {
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.custom-items-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+
+.custom-items-header p {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+}
+
+.no-items-message {
+  font-size: 0.9rem;
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  margin: 8px 0;
+}
+
+/* Make buttons more compact */
+.furniture-list li button {
+  padding: 2px 8px;
+  min-width: 40px;
+}
+
+/* Optimize dimension display */
+.furniture-dimensions {
+  font-size: 0.75rem;
+  margin-top: 1px;
+}
+
+/* Save space in the custom items form */
+.add-custom-form {
+  gap: 6px; /* Reduced gap */
+}
+
+.add-custom-form input {
+  padding: 5px 8px;
+  height: 30px;
+}
+
+/* Stack buttons in one row when possible */
+.action-buttons {
+  flex-wrap: wrap;
+  gap: 6px; /* Reduced gap */
+  justify-content: space-between;
+}
+
+.button-container {
+  margin: 3px;
+}
+
+/* Tighten up the custom items list */
+.custom-items-container, .default-items-container {
+  max-height: 200px;
+}
+
+/* Create a two-column layout for default templates if space allows */
+@media (min-width: 240px) {
+  .furniture-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+  }
+  
+  .furniture-list li {
+    margin-bottom: 0;
+  }
 } 

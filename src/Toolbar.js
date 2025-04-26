@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import 'rc-slider/assets/index.css';
+import { BsCameraFill, BsFillLayersFill, BsImage, BsUpload, BsCloudUpload, BsTrash, BsArrowCounterclockwise } from 'react-icons/bs';
+import { FaSave, FaCog } from 'react-icons/fa';
 
 // Helper function to parse dimension strings (e.g., "10'", "5'6", "7.5'", "72") into inches
 function parseDimensionString(input) {
@@ -291,26 +293,16 @@ function Toolbar({
           </div>
           
           <div className="button-container">
-          <button
-              className="icon-action-button share-button"
+            <button
+              className="icon-action-button save-image-button"
               onClick={onShareLayout}
               disabled={!canShare || isSettingScale}
-          >
-            <div className="share-icon-container">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="share-icon">
-                <circle cx="18" cy="5" r="3"></circle>
-                <circle cx="6" cy="12" r="3"></circle>
-                <circle cx="18" cy="19" r="3"></circle>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-              </svg>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="config-icon">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </div>
-            Share
-          </button>
+            >
+              <div className="save-icon-container">
+                <FaSave size={14} />
+              </div>
+              Save as Image
+            </button>
             {(!canShare || isSettingScale) && (
               <div className="button-tooltip">
                 {!canShare ? 'Upload image & set scale first' : 'Finish setting scale'}
@@ -401,7 +393,7 @@ function Toolbar({
                 <div className="custom-items-header">
                   <p>{customTemplates.length} custom item{customTemplates.length !== 1 ? 's' : ''}</p>
                   <button 
-                    className="add-all-button" 
+                    className="add-all-button compact-button" 
                     onClick={handleAddAllCustom}
                     disabled={pixelsPerInch === null}
                   >
@@ -409,18 +401,18 @@ function Toolbar({
                   </button>
                 </div>
                 
-                <div className="custom-items-container">
-                <ul className="furniture-list custom-furniture-list">
+                <div className="custom-items-container compact-list">
+                <ul className="furniture-list custom-furniture-list grid-layout">
                   {customTemplates.map((item) => (
-                    <li key={item.id} style={{ borderLeftColor: item.color }}>
-                      <div>
-                        <span>{item.name}</span>
+                    <li key={item.id} className="compact-item" style={{ borderLeftColor: item.color }}>
+                      <div className="item-details">
+                        <div className="item-name">{item.name}</div>
                         <div className="furniture-dimensions">{item.width}″ × {item.height}″</div>
                       </div>
-                      <div className="custom-item-actions">
+                      <div className="item-actions">
                         <button
                           onClick={() => handleEditCustomTemplate(item.id)}
-                          className="edit-template-button"
+                          className="edit-template-button mini-button"
                           title={`Edit Template${item.isGlobal ? " (Global)" : " (This plan only)"}`}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -431,6 +423,7 @@ function Toolbar({
                         <button 
                           onClick={() => onAddFurniture(item)}
                           disabled={pixelsPerInch === null}
+                          className="mini-button"
                         >
                           Add
                         </button>
@@ -462,8 +455,8 @@ function Toolbar({
         
         {/* Default Templates List */}
         {!isDefaultsCollapsed && (
-          <div className="default-items-container">
-          <ul className="furniture-list">
+          <div className="default-items-container compact-list">
+          <ul className="furniture-list grid-layout">
             {defaultTemplates.map((item) => {
               // Determine furniture type class
               let furnitureClass = "";
@@ -480,14 +473,15 @@ function Toolbar({
               }
               
               return (
-                <li key={item.id} className={furnitureClass} style={{ borderLeftColor: item.color }}>
-                  <div>
-                    <span>{item.name}</span>
+                <li key={item.id} className={`compact-item ${furnitureClass}`} style={{ borderLeftColor: item.color }}>
+                  <div className="item-details">
+                    <div className="item-name">{item.name}</div>
                     <div className="furniture-dimensions">{item.width}″ × {item.height}″</div>
                   </div>
                   <button 
                     onClick={() => onAddFurniture(item)}
                     disabled={pixelsPerInch === null}
+                    className="mini-button"
                   >
                     Add
                   </button>

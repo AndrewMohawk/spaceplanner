@@ -20,11 +20,11 @@ function ShareModal({ onClose, onShare, layoutData, floorplanImage }) {
         title
       });
       
-      // Close modal after successful share
+      // Close modal after successful save
       onClose();
     } catch (error) {
-      console.error('Error sharing layout:', error);
-      alert('Failed to share layout. Please try again.');
+      console.error('Error saving layout as image:', error);
+      alert('Failed to save layout as image. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -33,7 +33,7 @@ function ShareModal({ onClose, onShare, layoutData, floorplanImage }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content share-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Share Floor Plan</h2>
+        <h2>Save Floor Plan as Image</h2>
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -74,10 +74,10 @@ function ShareModal({ onClose, onShare, layoutData, floorplanImage }) {
           <div className="modal-actions">
             <button 
               type="submit" 
-              className="share-button"
+              className="save-button"
               disabled={isGenerating}
             >
-              {isGenerating ? 'Generating...' : 'Generate Shareable Image'}
+              {isGenerating ? 'Generating...' : 'Save as Image'}
             </button>
             <button type="button" onClick={onClose}>Cancel</button>
           </div>
